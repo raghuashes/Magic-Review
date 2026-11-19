@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Sample UI – Magic Review</title>
+  <style>
+    body {font-family:Arial,Helvetica,sans-serif; margin:2rem; background:#f5f5f5;}
+    .card {background:#fff; padding:1rem; margin-bottom:1rem; border-radius:6px; box-shadow:0 2px 4px rgba(0,0,0,0.1);}
+    button {margin:0.2rem; padding:0.4rem 0.8rem; border:none; border-radius:4px; cursor:pointer;}
+    .primary {background:#4f46e5; color:#fff;}
+    .danger {background:#e53e3e; color:#fff;}
+    .toggle {background:#38a169; color:#fff;}
+    input {padding:0.4rem; margin-right:0.5rem;}
+    pre {background:#eee; padding:0.5rem; overflow:auto;}
+  </style>
+</head>
+<body>
+  <h1>Admin Sample UI</h1>
+  <div class="card" id="login-card">
+    <h2>Login as Admin</h2>
+    <input type="email" id="email" placeholder="admin@magicreview.in" />
+    <input type="password" id="password" placeholder="Admin@MagicReview2026!" />
+    <button class="primary" id="login-btn">Login</button>
+    <p id="login-msg" style="color:red;"></p>
+  </div>
+
+  <div class="card" id="actions" style="display:none;">
+    <h2>Actions</h2>
+    <button class="primary" id="list-users">List Users</button>
+    <button class="primary" id="list-stores">List Stores</button>
+    <pre id="output"></pre>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8080';
+    let token = '';
+
+    async function api(path, method='GET', body=null){
+      const opts = {method, headers:{'Content-Type':'application/json'}};
+      if(token) opts.headers['Authorization'] = 'Bearer ' + token;
+      if(body) opts.body = JSON.stringify(body);
+      const res = await fetch(API_BASE + path, opts);
+      if(!res.ok){ const txt = await res.text(); throw new Error(res.status+': '+txt); }
+      return res.json();
+    }
+
+    document.getElementById('login-btn').onclick = async()=>{
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      try{
+        const data = await api('/api/auth/login', 'POST', {email, password});
+        token = data.token;
+        document.getElementById('login-msg').textContent='';
+        document.getElementById('login-card').style.display='none';
+        document.getElementById('actions').style.display='block';
+      }catch(e){
+        document.getElementById('login-msg').textContent='Login failed: '+e.message;
+      }
+    };
+
+    document.getElementById('list-users').onclick = async()=>{
+      try{
+        const users = await api('/api/admin/users');
+        const out = users.map(u=>`${u.id} | ${u.email} | ${u.role} | Stores:${u.storeCount} | Joined:${u.createdAt}`).join('\n');
+        document.getElementById('output').textContent = out;
+      }catch(e){alert('Error fetching users: '+e.message);}
+    };
+
+    document.getElementById('list-stores').onclick = async()=>{
+      try{
+        const stores = await api('/api/admin/stores');
+        const container = document.getElementById('output');
+        container.textContent='';
+        stores.forEach(s=>{
+          const div = document.createElement('div');
+          div.textContent = `${s.name} (${s.slug}) – Owner:${s.ownerEmail} – Active:${s.active}`;
+          const toggleBtn = document.createElement('button');
+          toggleBtn.textContent = s.active?'Disable':'Enable';
+          toggleBtn.className = 'toggle';
+          toggleBtn.onclick = async()=>{
+            try{
+              const upd = await api('/api/admin/stores/'+s.id+'/toggle-status', 'PUT');
+              alert('Store status now: '+upd.active);
+              // refresh list
+              document.getElementById('list-stores').click();
+            }catch(err){alert('Toggle failed: '+err.message);}
+          };
+          const delBtn = document.createElement('button');
+          delBtn.textContent='Delete';
+          delBtn.className='danger';
+          delBtn.onclick = async()=>{
+            if(!confirm('Delete store '+s.name+'?')) return;
+            try{await api('/api/admin/stores/'+s.id, 'DELETE'); alert('Deleted'); document.getElementById('list-stores').click();}
+            catch(err){alert('Delete failed: '+err.message);}
+          };
+          div.appendChild(toggleBtn);
+          div.appendChild(delBtn);
+          container.appendChild(div);
+        });
+      }catch(e){alert('Error fetching stores: '+e.message);}
+    };
+  </script>
+</body>
+</html>
