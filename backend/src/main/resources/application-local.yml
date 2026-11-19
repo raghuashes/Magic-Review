@@ -1,9 +1,9 @@
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:magicreview;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1}
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.h2.Driver}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: update
