@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
-import { Store, QrCode, BarChart3, LogOut, Sparkles, User as UserIcon } from 'lucide-react';
+import { Store, QrCode, BarChart3, LogOut, Sparkles, User as UserIcon, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export const Sidebar: React.FC = () => {
@@ -50,6 +50,16 @@ export const Sidebar: React.FC = () => {
             {item.name}
           </NavLink>
         ))}
+
+        {user?.role === 'ADMIN' && (
+          <Link
+            to="/admin/dashboard"
+            className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 transition-all border border-purple-200 mt-4"
+          >
+            <ShieldCheck className="w-4 h-4 shrink-0 text-purple-600" />
+            Admin Center
+          </Link>
+        )}
       </nav>
 
       {/* User info & Logout */}

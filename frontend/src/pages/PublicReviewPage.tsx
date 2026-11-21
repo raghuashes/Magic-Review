@@ -195,7 +195,9 @@ export const PublicReviewPage: React.FC = () => {
       <div
         className="w-full text-white pt-8 pb-12 px-4 shadow-md transition-all relative overflow-hidden"
         style={{
-          background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
+          background: store.posterUrl
+            ? `linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.88)), url(${store.posterUrl}) center/cover no-repeat`
+            : `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
         }}
       >
         <div className="max-w-lg mx-auto flex flex-col items-center text-center relative z-10">

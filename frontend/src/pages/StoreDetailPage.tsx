@@ -19,6 +19,29 @@ import { QRCodeModal } from '../components/QRCodeModal';
 import { Toast } from '../components/Toast';
 import { getErrorMessage } from '../services/api';
 
+const POSTER_PRESETS = [
+  {
+    name: 'Jewellery Boutique',
+    url: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    name: 'Restaurant / Cafe',
+    url: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    name: 'Salon & Spa',
+    url: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    name: 'Clothing / Fashion',
+    url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+  },
+  {
+    name: 'Clinic / Healthcare',
+    url: 'https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=800&q=80',
+  },
+];
+
 export const StoreDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
 
@@ -36,6 +59,7 @@ export const StoreDetailPage: React.FC = () => {
     slug: '',
     description: '',
     logoUrl: '',
+    posterUrl: '',
     primaryColor: '#4F46E5',
     secondaryColor: '#06B6D4',
     googleReviewUrl: '',
@@ -67,6 +91,7 @@ export const StoreDetailPage: React.FC = () => {
           slug: storeData.slug,
           description: storeData.description || '',
           logoUrl: storeData.logoUrl || '',
+          posterUrl: storeData.posterUrl || '',
           primaryColor: storeData.primaryColor || '#4F46E5',
           secondaryColor: storeData.secondaryColor || '#06B6D4',
           googleReviewUrl: storeData.googleReviewUrl,
@@ -290,6 +315,43 @@ export const StoreDetailPage: React.FC = () => {
                   placeholder="https://example.com/logo.png"
                   className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Business Poster / Storefront Banner URL
+                </label>
+                <input
+                  type="url"
+                  value={formData.posterUrl || ''}
+                  onChange={(e) => setFormData({ ...formData, posterUrl: e.target.value })}
+                  placeholder="https://example.com/poster.jpg"
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none mb-2"
+                />
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {POSTER_PRESETS.map((preset) => (
+                    <button
+                      key={preset.name}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, posterUrl: preset.url })}
+                      className="px-2.5 py-1 text-[11px] font-semibold bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg text-slate-600 transition-colors"
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
+                {formData.posterUrl && (
+                  <div className="relative rounded-xl overflow-hidden border border-slate-200 h-28 bg-slate-100">
+                    <img
+                      src={formData.posterUrl}
+                      alt="Store Poster Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div>

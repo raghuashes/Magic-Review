@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Sparkles, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Sparkles, ArrowRight, Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { getErrorMessage } from '../services/api';
 
@@ -23,7 +23,13 @@ export const LoginPage: React.FC = () => {
 
     try {
       await login(email, password);
-      navigate(from, { replace: true });
+      const storedUser = localStorage.getItem('user');
+      const parsed = storedUser ? JSON.parse(storedUser) : null;
+      if (parsed?.role === 'ADMIN') {
+        navigate('/admin/dashboard', { replace: true });
+      } else {
+        navigate(from, { replace: true });
+      }
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -34,6 +40,11 @@ export const LoginPage: React.FC = () => {
   const handleFillDemo = () => {
     setEmail('demo.owner@magicreview.in');
     setPassword('MagicReview2026!');
+  };
+
+  const handleFillAdmin = () => {
+    setEmail('admin@magicreview.in');
+    setPassword('Admin@MagicReview2026!');
   };
 
   return (
@@ -114,14 +125,22 @@ export const LoginPage: React.FC = () => {
           </form>
 
           {/* Quick Demo Helper */}
-          <div className="mt-6 pt-6 border-t border-slate-100">
+          <div className="mt-6 pt-6 border-t border-slate-100 space-y-2">
             <button
               type="button"
               onClick={handleFillDemo}
               className="w-full py-2 px-3 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 hover:bg-indigo-50 text-indigo-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              Quick Fill Demo Credentials
+              Quick Fill Merchant Demo
+            </button>
+            <button
+              type="button"
+              onClick={handleFillAdmin}
+              className="w-full py-2 px-3 rounded-xl border border-dashed border-purple-300 bg-purple-50/50 hover:bg-purple-50 text-purple-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Quick Fill Super Admin
             </button>
             <p className="text-[11px] text-center text-slate-400 mt-3">
               Platform Administrator?{' '}
