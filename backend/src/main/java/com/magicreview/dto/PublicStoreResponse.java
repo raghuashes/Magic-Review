@@ -19,6 +19,10 @@ public class PublicStoreResponse {
     private String instagramUrl;
     private String websiteUrl;
     private String facebookUrl;
+    private String businessEmail;
+    private String businessCategory;
+    private String welcomeMessage;
+    private String thankYouMessage;
     private List<CategoryResponse> categories;
     private List<AttributeResponse> attributes;
 
@@ -53,6 +57,21 @@ public class PublicStoreResponse {
         this.instagramUrl = instagramUrl;
         this.websiteUrl = websiteUrl;
         this.facebookUrl = facebookUrl;
+    }
+
+    public PublicStoreResponse(UUID id, String name, String slug, String description, String logoUrl,
+                               String posterUrl, String primaryColor, String secondaryColor, String googleReviewUrl,
+                               String phone, String whatsapp, String address,
+                               String instagramUrl, String websiteUrl, String facebookUrl,
+                               String businessEmail, String businessCategory,
+                               String welcomeMessage, String thankYouMessage,
+                               List<CategoryResponse> categories, List<AttributeResponse> attributes) {
+        this(id, name, slug, description, logoUrl, posterUrl, primaryColor, secondaryColor, googleReviewUrl,
+             phone, whatsapp, address, instagramUrl, websiteUrl, facebookUrl, categories, attributes);
+        this.businessEmail = businessEmail;
+        this.businessCategory = businessCategory;
+        this.welcomeMessage = welcomeMessage;
+        this.thankYouMessage = thankYouMessage;
     }
 
     public UUID getId() {
@@ -141,5 +160,85 @@ public class PublicStoreResponse {
 
     public void setAttributes(List<AttributeResponse> attributes) {
         this.attributes = attributes;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getWhatsapp() {
+        return whatsapp;
+    }
+
+    public void setWhatsapp(String whatsapp) {
+        this.whatsapp = whatsapp;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getInstagramUrl() {
+        return instagramUrl;
+    }
+
+    public void setInstagramUrl(String instagramUrl) {
+        this.instagramUrl = instagramUrl;
+    }
+
+    public String getWebsiteUrl() {
+        return websiteUrl;
+    }
+
+    public void setWebsiteUrl(String websiteUrl) {
+        this.websiteUrl = websiteUrl;
+    }
+
+    public String getFacebookUrl() {
+        return facebookUrl;
+    }
+
+    public void setFacebookUrl(String facebookUrl) {
+        this.facebookUrl = facebookUrl;
+    }
+
+    public String getBusinessEmail() {
+        return businessEmail;
+    }
+
+    public void setBusinessEmail(String businessEmail) {
+        this.businessEmail = businessEmail;
+    }
+
+    public String getBusinessCategory() {
+        return businessCategory;
+    }
+
+    public void setBusinessCategory(String businessCategory) {
+        this.businessCategory = businessCategory;
+    }
+
+    public String getWelcomeMessage() {
+        return welcomeMessage;
+    }
+
+    public void setWelcomeMessage(String welcomeMessage) {
+        this.welcomeMessage = welcomeMessage;
+    }
+
+    public String getThankYouMessage() {
+        return thankYouMessage;
+    }
+
+    public void setThankYouMessage(String thankYouMessage) {
+        this.thankYouMessage = thankYouMessage;
     }
 }

@@ -20,6 +20,10 @@ public class GenerateReviewRequest {
 
     private List<String> previousReviews = new ArrayList<>();
 
+    private Integer starRating = 5;
+
+    private String tone = "FRIENDLY";
+
     public GenerateReviewRequest() {
     }
 
@@ -78,5 +82,21 @@ public class GenerateReviewRequest {
 
     public void setPreviousReviews(List<String> previousReviews) {
         this.previousReviews = previousReviews != null ? previousReviews : new ArrayList<>();
+    }
+
+    public Integer getStarRating() {
+        return starRating != null ? starRating : 5;
+    }
+
+    public void setStarRating(Integer starRating) {
+        this.starRating = starRating;
+    }
+
+    public String getTone() {
+        return tone != null ? tone : "FRIENDLY";
+    }
+
+    public void setTone(String tone) {
+        this.tone = tone;
     }
 }

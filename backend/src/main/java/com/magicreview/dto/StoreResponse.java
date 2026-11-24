@@ -22,6 +22,10 @@ public class StoreResponse {
     private String instagramUrl;
     private String websiteUrl;
     private String facebookUrl;
+    private String businessEmail;
+    private String businessCategory;
+    private String welcomeMessage;
+    private String thankYouMessage;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 
@@ -61,6 +65,22 @@ public class StoreResponse {
         this.instagramUrl = instagramUrl;
         this.websiteUrl = websiteUrl;
         this.facebookUrl = facebookUrl;
+    }
+
+    public StoreResponse(UUID id, String name, String slug, String description, String logoUrl,
+                         String posterUrl, String primaryColor, String secondaryColor, String googleReviewUrl,
+                         Boolean active, String qrCodeUrl, String publicUrl,
+                         String phone, String whatsapp, String address,
+                         String instagramUrl, String websiteUrl, String facebookUrl,
+                         String businessEmail, String businessCategory,
+                         String welcomeMessage, String thankYouMessage,
+                         OffsetDateTime createdAt, OffsetDateTime updatedAt) {
+        this(id, name, slug, description, logoUrl, posterUrl, primaryColor, secondaryColor, googleReviewUrl, active, qrCodeUrl, publicUrl,
+             phone, whatsapp, address, instagramUrl, websiteUrl, facebookUrl, createdAt, updatedAt);
+        this.businessEmail = businessEmail;
+        this.businessCategory = businessCategory;
+        this.welcomeMessage = welcomeMessage;
+        this.thankYouMessage = thankYouMessage;
     }
 
     public UUID getId() {
@@ -221,5 +241,37 @@ public class StoreResponse {
 
     public void setFacebookUrl(String facebookUrl) {
         this.facebookUrl = facebookUrl;
+    }
+
+    public String getBusinessEmail() {
+        return businessEmail;
+    }
+
+    public void setBusinessEmail(String businessEmail) {
+        this.businessEmail = businessEmail;
+    }
+
+    public String getBusinessCategory() {
+        return businessCategory;
+    }
+
+    public void setBusinessCategory(String businessCategory) {
+        this.businessCategory = businessCategory;
+    }
+
+    public String getWelcomeMessage() {
+        return welcomeMessage;
+    }
+
+    public void setWelcomeMessage(String welcomeMessage) {
+        this.welcomeMessage = welcomeMessage;
+    }
+
+    public String getThankYouMessage() {
+        return thankYouMessage;
+    }
+
+    public void setThankYouMessage(String thankYouMessage) {
+        this.thankYouMessage = thankYouMessage;
     }
 }

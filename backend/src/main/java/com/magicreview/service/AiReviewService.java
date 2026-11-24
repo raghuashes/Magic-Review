@@ -42,7 +42,9 @@ public class AiReviewService {
                 request.getAttributes(),
                 request.getCustomerNote(),
                 request.getLanguageStyle(),
-                request.getPreviousReviews()
+                request.getPreviousReviews(),
+                request.getStarRating(),
+                request.getTone()
         );
 
         if (aiGenerated.isPresent() && !aiGenerated.get().isBlank()) {
@@ -56,7 +58,9 @@ public class AiReviewService {
                     request.getAttributes(),
                     request.getCustomerNote(),
                     request.getLanguageStyle(),
-                    request.getPreviousReviews()
+                    request.getPreviousReviews(),
+                    request.getStarRating(),
+                    request.getTone()
             );
             mode = "demo";
         }

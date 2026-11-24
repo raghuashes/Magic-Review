@@ -30,6 +30,12 @@ public class DemoReviewGenerator {
     public String generateReview(String storeName, String category, List<String> attributes,
                                  String customerNote, LanguageStyle languageStyle,
                                  List<String> previousReviews) {
+        return generateReview(storeName, category, attributes, customerNote, languageStyle, previousReviews, 5, "FRIENDLY");
+    }
+
+    public String generateReview(String storeName, String category, List<String> attributes,
+                                 String customerNote, LanguageStyle languageStyle,
+                                 List<String> previousReviews, Integer starRating, String tone) {
         String safeStore = (storeName != null && !storeName.isBlank()) ? storeName.trim() : "this store";
         String safeCategory = (category != null && !category.isBlank()) ? category.trim() : "service";
 

@@ -5,13 +5,12 @@ import com.magicreview.security.UserDetailsImpl;
 import com.magicreview.service.AnalyticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @RestController
@@ -26,10 +25,13 @@ public class AnalyticsController {
     }
 
     @GetMapping
-    @Operation(summary = "Fetch funnel analytics summary for a store (tenant isolated)")
+    @Operation(summary = "Fetch funnel analytics summary for a store with date range filter (tenant isolated)")
     public ResponseEntity<AnalyticsResponse> getStoreAnalytics(@AuthenticationPrincipal UserDetailsImpl userPrincipal,
-                                                               @PathVariable UUID id) {
-        AnalyticsResponse response = analyticsService.getStoreAnalytics(id, userPrincipal.getId());
+                                                               @PathVariable UUID id,
+                                                               @RequestParam(required = false, defaultValue = "all") String range,
+                                                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime from,
+                                                               @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime to) {
+        AnalyticsResponse response = analyticsService.getStoreAnalytics(id, userPrincipal.getId(), range, from, to);
         return ResponseEntity.ok(response);
     }
 }

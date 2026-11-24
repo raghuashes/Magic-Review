@@ -47,6 +47,16 @@ public class StoreRequest {
     @Size(max = 512, message = "Facebook URL cannot exceed 512 characters")
     private String facebookUrl;
 
+    @Size(max = 255, message = "Business email cannot exceed 255 characters")
+    private String businessEmail;
+
+    @Size(max = 100, message = "Business category cannot exceed 100 characters")
+    private String businessCategory;
+
+    private String welcomeMessage;
+
+    private String thankYouMessage;
+
     private Boolean active = true;
 
     public StoreRequest() {
@@ -170,5 +180,37 @@ public class StoreRequest {
 
     public void setFacebookUrl(String facebookUrl) {
         this.facebookUrl = facebookUrl;
+    }
+
+    public String getBusinessEmail() {
+        return businessEmail;
+    }
+
+    public void setBusinessEmail(String businessEmail) {
+        this.businessEmail = businessEmail;
+    }
+
+    public String getBusinessCategory() {
+        return businessCategory;
+    }
+
+    public void setBusinessCategory(String businessCategory) {
+        this.businessCategory = businessCategory;
+    }
+
+    public String getWelcomeMessage() {
+        return welcomeMessage;
+    }
+
+    public void setWelcomeMessage(String welcomeMessage) {
+        this.welcomeMessage = welcomeMessage;
+    }
+
+    public String getThankYouMessage() {
+        return thankYouMessage;
+    }
+
+    public void setThankYouMessage(String thankYouMessage) {
+        this.thankYouMessage = thankYouMessage;
     }
 }

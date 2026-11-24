@@ -98,6 +98,16 @@ public class StoreService {
                 request.getActive() != null ? request.getActive() : true
         );
         store.setPosterUrl(request.getPosterUrl());
+        store.setPhone(request.getPhone());
+        store.setWhatsapp(request.getWhatsapp());
+        store.setAddress(request.getAddress());
+        store.setInstagramUrl(request.getInstagramUrl());
+        store.setWebsiteUrl(request.getWebsiteUrl());
+        store.setFacebookUrl(request.getFacebookUrl());
+        store.setBusinessEmail(request.getBusinessEmail());
+        store.setBusinessCategory(request.getBusinessCategory());
+        store.setWelcomeMessage(request.getWelcomeMessage());
+        store.setThankYouMessage(request.getThankYouMessage());
 
         Store savedStore = storeRepository.save(store);
 
@@ -139,6 +149,16 @@ public class StoreService {
         if (request.getPrimaryColor() != null) store.setPrimaryColor(request.getPrimaryColor());
         if (request.getSecondaryColor() != null) store.setSecondaryColor(request.getSecondaryColor());
         store.setGoogleReviewUrl(request.getGoogleReviewUrl().trim());
+        store.setPhone(request.getPhone());
+        store.setWhatsapp(request.getWhatsapp());
+        store.setAddress(request.getAddress());
+        store.setInstagramUrl(request.getInstagramUrl());
+        store.setWebsiteUrl(request.getWebsiteUrl());
+        store.setFacebookUrl(request.getFacebookUrl());
+        store.setBusinessEmail(request.getBusinessEmail());
+        store.setBusinessCategory(request.getBusinessCategory());
+        store.setWelcomeMessage(request.getWelcomeMessage());
+        store.setThankYouMessage(request.getThankYouMessage());
         if (request.getActive() != null) store.setActive(request.getActive());
 
         Store updatedStore = storeRepository.save(store);
@@ -178,6 +198,16 @@ public class StoreService {
                 store.getPrimaryColor(),
                 store.getSecondaryColor(),
                 store.getGoogleReviewUrl(),
+                store.getPhone(),
+                store.getWhatsapp(),
+                store.getAddress(),
+                store.getInstagramUrl(),
+                store.getWebsiteUrl(),
+                store.getFacebookUrl(),
+                store.getBusinessEmail(),
+                store.getBusinessCategory(),
+                store.getWelcomeMessage(),
+                store.getThankYouMessage(),
                 categories,
                 attributes
         );
@@ -209,6 +239,16 @@ public class StoreService {
                 store.getActive(),
                 qrCodeUrl,
                 publicUrl,
+                store.getPhone(),
+                store.getWhatsapp(),
+                store.getAddress(),
+                store.getInstagramUrl(),
+                store.getWebsiteUrl(),
+                store.getFacebookUrl(),
+                store.getBusinessEmail(),
+                store.getBusinessCategory(),
+                store.getWelcomeMessage(),
+                store.getThankYouMessage(),
                 store.getCreatedAt(),
                 store.getUpdatedAt()
         );

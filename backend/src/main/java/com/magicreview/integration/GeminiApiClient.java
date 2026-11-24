@@ -47,12 +47,18 @@ public class GeminiApiClient {
     public Optional<String> generateReview(String storeName, String category, List<String> attributes,
                                            String customerNote, LanguageStyle languageStyle,
                                            List<String> previousReviews) {
+        return generateReview(storeName, category, attributes, customerNote, languageStyle, previousReviews, 5, "FRIENDLY");
+    }
+
+    public Optional<String> generateReview(String storeName, String category, List<String> attributes,
+                                           String customerNote, LanguageStyle languageStyle,
+                                           List<String> previousReviews, Integer starRating, String tone) {
         if (!isConfigured()) {
             log.info("Gemini API key is not configured. Switching to Demo Mode fallback.");
             return Optional.empty();
         }
 
-        String prompt = buildPrompt(storeName, category, attributes, customerNote, languageStyle, previousReviews);
+        String prompt = buildPrompt(storeName, category, attributes, customerNote, languageStyle, previousReviews, starRating, tone);
         String url = String.format("%s/%s:generateContent?key=%s", apiUrl, model, apiKey);
 
         Map<String, Object> requestBody = Map.of(
@@ -100,8 +106,16 @@ public class GeminiApiClient {
     private String buildPrompt(String storeName, String category, List<String> attributes,
                                String customerNote, LanguageStyle languageStyle,
                                List<String> previousReviews) {
+        return buildPrompt(storeName, category, attributes, customerNote, languageStyle, previousReviews, 5, "FRIENDLY");
+    }
+
+    private String buildPrompt(String storeName, String category, List<String> attributes,
+                               String customerNote, LanguageStyle languageStyle,
+                               List<String> previousReviews, Integer starRating, String tone) {
         String attrsString = (attributes != null && !attributes.isEmpty()) ? String.join(", ", attributes) : "None";
         String noteString = (customerNote != null && !customerNote.isBlank()) ? customerNote.trim() : "None";
+        String safeTone = (tone != null && !tone.isBlank()) ? tone : "FRIENDLY";
+        int safeRating = (starRating != null && starRating >= 1 && starRating <= 5) ? starRating : 5;
 
         StringBuilder sb = new StringBuilder();
         sb.append("You are an expert customer review generator for local Indian businesses.\n");
@@ -109,6 +123,8 @@ public class GeminiApiClient {
         sb.append("Business Name: ").append(storeName).append("\n");
         sb.append("Category: ").append(category).append("\n");
         sb.append("Attributes Selected: ").append(attrsString).append("\n");
+        sb.append("Customer Rating: ").append(safeRating).append(" out of 5 stars\n");
+        sb.append("Desired Review Tone: ").append(safeTone).append("\n");
         sb.append("Customer Notes: ").append(noteString).append("\n\n");
 
         if (previousReviews != null && !previousReviews.isEmpty()) {

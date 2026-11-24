@@ -2,7 +2,16 @@ export type Role = 'BUSINESS_OWNER' | 'ADMIN';
 
 export type LanguageStyle = 'ENGLISH' | 'TELUGU_ENGLISH_MIX' | 'HINGLISH';
 
-export type EventType = 'PAGE_VIEW' | 'DRAFT_GENERATED' | 'GOOGLE_LINK_CLICKED';
+export type ReviewTone = 'FRIENDLY' | 'PROFESSIONAL' | 'ENTHUSIASTIC' | 'SHORT';
+
+export type EventType =
+  | 'PAGE_VIEW'
+  | 'DRAFT_GENERATED'
+  | 'GOOGLE_LINK_CLICKED'
+  | 'WHATSAPP_CLICKED'
+  | 'INSTAGRAM_CLICKED'
+  | 'FACEBOOK_CLICKED'
+  | 'WEBSITE_CLICKED';
 
 export interface User {
   id: string;
@@ -30,6 +39,16 @@ export interface Store {
   active: boolean;
   qrCodeUrl: string;
   publicUrl: string;
+  phone?: string;
+  whatsapp?: string;
+  address?: string;
+  instagramUrl?: string;
+  websiteUrl?: string;
+  facebookUrl?: string;
+  businessEmail?: string;
+  businessCategory?: string;
+  welcomeMessage?: string;
+  thankYouMessage?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -44,6 +63,16 @@ export interface StoreRequest {
   secondaryColor?: string;
   googleReviewUrl: string;
   active?: boolean;
+  phone?: string;
+  whatsapp?: string;
+  address?: string;
+  instagramUrl?: string;
+  websiteUrl?: string;
+  facebookUrl?: string;
+  businessEmail?: string;
+  businessCategory?: string;
+  welcomeMessage?: string;
+  thankYouMessage?: string;
 }
 
 export interface Category {
@@ -86,6 +115,16 @@ export interface PublicStore {
   primaryColor?: string;
   secondaryColor?: string;
   googleReviewUrl: string;
+  phone?: string;
+  whatsapp?: string;
+  address?: string;
+  instagramUrl?: string;
+  websiteUrl?: string;
+  facebookUrl?: string;
+  businessEmail?: string;
+  businessCategory?: string;
+  welcomeMessage?: string;
+  thankYouMessage?: string;
   categories: Category[];
   attributes: Attribute[];
 }
@@ -96,6 +135,8 @@ export interface GenerateReviewRequest {
   customerNote?: string;
   languageStyle: LanguageStyle;
   previousReviews?: string[];
+  starRating?: number;
+  tone?: ReviewTone;
 }
 
 export interface GenerateReviewResponse {
@@ -111,8 +152,13 @@ export interface AnalyticsResponse {
   pageViews: number;
   draftsGenerated: number;
   googleClicks: number;
+  whatsappClicks: number;
+  instagramClicks: number;
+  facebookClicks: number;
+  websiteClicks: number;
   generationRate: number;
   clickThroughRate: number;
+  filterRange?: string;
 }
 
 export interface AdminStats {

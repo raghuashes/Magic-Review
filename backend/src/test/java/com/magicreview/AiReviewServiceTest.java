@@ -68,7 +68,7 @@ public class AiReviewServiceTest {
     void testEnglishReviewGeneration() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.ENGLISH), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.ENGLISH), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Triggers fallback demo generator
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -96,7 +96,7 @@ public class AiReviewServiceTest {
     void testTeluguEnglishMixReviewGeneration() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Triggers fallback demo generator
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -130,7 +130,7 @@ public class AiReviewServiceTest {
     void testHinglishReviewGeneration() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.HINGLISH), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.HINGLISH), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Triggers fallback demo generator
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -164,7 +164,7 @@ public class AiReviewServiceTest {
     void testNonRepetitionOnRegenerate() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Fallback demo engine
 
         List<String> seenReviews = new ArrayList<>();
@@ -199,7 +199,7 @@ public class AiReviewServiceTest {
                 .thenReturn(Optional.of(mockStore));
 
         String mockAiOutput = "\"Sri Sai Jewellers lo bridal collection chala awesome ga undhi. Staff helped us patiently!\"";
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
                 .thenReturn(Optional.of(mockAiOutput));
 
         GenerateReviewRequest request = new GenerateReviewRequest(

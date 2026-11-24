@@ -83,8 +83,10 @@ export const storeService = {
   },
 
   // Analytics
-  async getStoreAnalytics(storeId: string): Promise<AnalyticsResponse> {
-    const response = await api.get<AnalyticsResponse>(`/api/stores/${storeId}/analytics`);
+  async getStoreAnalytics(storeId: string, range = 'all', from?: string, to?: string): Promise<AnalyticsResponse> {
+    const response = await api.get<AnalyticsResponse>(`/api/stores/${storeId}/analytics`, {
+      params: { range, from, to }
+    });
     return response.data;
   },
 };

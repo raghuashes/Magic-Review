@@ -60,6 +60,18 @@ public class Store {
     @Column(name = "facebook_url", length = 512)
     private String facebookUrl;
 
+    @Column(name = "business_email", length = 255)
+    private String businessEmail;
+
+    @Column(name = "business_category", length = 100)
+    private String businessCategory;
+
+    @Column(name = "welcome_message", columnDefinition = "TEXT")
+    private String welcomeMessage;
+
+    @Column(name = "thank_you_message", columnDefinition = "TEXT")
+    private String thankYouMessage;
+
     @Column(nullable = false)
     private Boolean active = true;
 
@@ -285,5 +297,37 @@ public class Store {
 
     public void setFacebookUrl(String facebookUrl) {
         this.facebookUrl = facebookUrl;
+    }
+
+    public String getBusinessEmail() {
+        return businessEmail;
+    }
+
+    public void setBusinessEmail(String businessEmail) {
+        this.businessEmail = businessEmail;
+    }
+
+    public String getBusinessCategory() {
+        return businessCategory;
+    }
+
+    public void setBusinessCategory(String businessCategory) {
+        this.businessCategory = businessCategory;
+    }
+
+    public String getWelcomeMessage() {
+        return welcomeMessage;
+    }
+
+    public void setWelcomeMessage(String welcomeMessage) {
+        this.welcomeMessage = welcomeMessage;
+    }
+
+    public String getThankYouMessage() {
+        return thankYouMessage;
+    }
+
+    public void setThankYouMessage(String thankYouMessage) {
+        this.thankYouMessage = thankYouMessage;
     }
 }

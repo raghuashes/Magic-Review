@@ -23,3 +23,24 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Standee Print Styles */
+@media print {
+  body {
+    background: #FFFFFF !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  header, nav, aside, footer, .print\:hidden {
+    display: none !important;
+  }
+
+  #printable-standee {
+    margin: 20px auto !important;
+    box-shadow: none !important;
+    max-width: 420px !important;
+    page-break-inside: avoid;
+  }
+}
+
