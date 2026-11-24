@@ -159,6 +159,7 @@ export interface AnalyticsResponse {
   generationRate: number;
   clickThroughRate: number;
   filterRange?: string;
+  campaignBreakdown?: Record<string, number>;
 }
 
 export interface AdminStats {

@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.OffsetDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -36,7 +39,7 @@ public class AnalyticsService {
         Store store = storeRepository.findBySlugAndActiveTrue(slug)
                 .orElseThrow(() -> new ResourceNotFoundException("Store not found or inactive: " + slug));
 
-        AnalyticsEvent event = new AnalyticsEvent(store, request.getEventType());
+        AnalyticsEvent event = new AnalyticsEvent(store, request.getEventType(), request.getCampaign());
         analyticsEventRepository.save(event);
     }
 
@@ -81,6 +84,22 @@ public class AnalyticsService {
                 ? round((double) googleClicks / draftsGenerated * 100.0, 1)
                 : 0.0;
 
+        Map<String, Long> campaignBreakdown = new LinkedHashMap<>();
+        try {
+            List<Object[]> rawCampaigns = analyticsEventRepository.countScansByCampaign(storeId);
+            if (rawCampaigns != null) {
+                for (Object[] row : rawCampaigns) {
+                    if (row != null && row.length >= 2 && row[0] != null) {
+                        String camp = String.valueOf(row[0]);
+                        Long cnt = ((Number) row[1]).longValue();
+                        campaignBreakdown.put(camp, cnt);
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+            // Graceful handling if migration pending
+        }
+
         return new AnalyticsResponse(
                 store.getId(),
                 store.getName(),
@@ -93,7 +112,8 @@ public class AnalyticsService {
                 websiteClicks,
                 generationRate,
                 clickThroughRate,
-                activeRange
+                activeRange,
+                campaignBreakdown
         );
     }
 

@@ -62,6 +62,9 @@ export const PublicReviewPage: React.FC = () => {
   const [reviewHistory, setReviewHistory] = useState<string[]>([]);
   const [activeVariationIndex, setActiveVariationIndex] = useState<number>(0);
 
+  // Read optional campaign tag from QR code scan URL query (e.g. ?campaign=counter)
+  const campaignTag = new URLSearchParams(window.location.search).get('campaign') || undefined;
+
   // Reset history if language changes
   const handleLanguageChange = (newLang: LanguageStyle) => {
     setLanguageStyle(newLang);
@@ -86,8 +89,8 @@ export const PublicReviewPage: React.FC = () => {
         if (data.attributes && data.attributes.length > 0) {
           setSelectedAttributes(data.attributes.slice(0, 2).map((a) => a.label));
         }
-        // Record PAGE_VIEW analytics event
-        publicService.recordEvent(slug, 'PAGE_VIEW');
+        // Record PAGE_VIEW analytics event with campaign attribution
+        publicService.recordEvent(slug, 'PAGE_VIEW', campaignTag);
       } catch (err) {
         setStoreError(getErrorMessage(err));
       } finally {
@@ -131,7 +134,7 @@ export const PublicReviewPage: React.FC = () => {
       setActiveVariationIndex(updatedHistory.length - 1);
 
       // Record DRAFT_GENERATED analytics event
-      publicService.recordEvent(slug, 'DRAFT_GENERATED');
+      publicService.recordEvent(slug, 'DRAFT_GENERATED', campaignTag);
 
       // Subtle celebration
       if (response.reviewText) {
@@ -181,7 +184,7 @@ export const PublicReviewPage: React.FC = () => {
   const handleProceedToGoogle = () => {
     if (!store?.googleReviewUrl || !slug) return;
     // Record GOOGLE_LINK_CLICKED event
-    publicService.recordEvent(slug, 'GOOGLE_LINK_CLICKED');
+    publicService.recordEvent(slug, 'GOOGLE_LINK_CLICKED', campaignTag);
     // Open Google Review page in a new tab safely
     window.open(store.googleReviewUrl, '_blank', 'noopener,noreferrer');
   };
@@ -196,7 +199,7 @@ export const PublicReviewPage: React.FC = () => {
     };
     const eventType = eventMap[platform];
     if (eventType) {
-      publicService.recordEvent(slug, eventType);
+      publicService.recordEvent(slug, eventType, campaignTag);
     }
   };
 

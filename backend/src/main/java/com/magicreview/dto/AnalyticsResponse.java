@@ -1,5 +1,7 @@
 package com.magicreview.dto;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public class AnalyticsResponse {
@@ -15,6 +17,7 @@ public class AnalyticsResponse {
     private double generationRate;
     private double clickThroughRate;
     private String filterRange = "all";
+    private Map<String, Long> campaignBreakdown = new LinkedHashMap<>();
 
     public AnalyticsResponse() {
     }
@@ -51,6 +54,18 @@ public class AnalyticsResponse {
         this.generationRate = generationRate;
         this.clickThroughRate = clickThroughRate;
         this.filterRange = filterRange != null ? filterRange : "all";
+    }
+
+    public AnalyticsResponse(UUID storeId, String storeName, long pageViews, long draftsGenerated,
+                             long googleClicks, long whatsappClicks, long instagramClicks,
+                             long facebookClicks, long websiteClicks,
+                             double generationRate, double clickThroughRate, String filterRange,
+                             Map<String, Long> campaignBreakdown) {
+        this(storeId, storeName, pageViews, draftsGenerated, googleClicks, whatsappClicks, instagramClicks,
+                facebookClicks, websiteClicks, generationRate, clickThroughRate, filterRange);
+        if (campaignBreakdown != null) {
+            this.campaignBreakdown = campaignBreakdown;
+        }
     }
 
     public UUID getStoreId() {
@@ -147,5 +162,13 @@ public class AnalyticsResponse {
 
     public void setFilterRange(String filterRange) {
         this.filterRange = filterRange;
+    }
+
+    public Map<String, Long> getCampaignBreakdown() {
+        return campaignBreakdown;
+    }
+
+    public void setCampaignBreakdown(Map<String, Long> campaignBreakdown) {
+        this.campaignBreakdown = campaignBreakdown;
     }
 }

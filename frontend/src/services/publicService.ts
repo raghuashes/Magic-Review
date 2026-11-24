@@ -17,9 +17,9 @@ export const publicService = {
     return response.data;
   },
 
-  async recordEvent(slug: string, eventType: EventType): Promise<void> {
+  async recordEvent(slug: string, eventType: EventType, campaign?: string): Promise<void> {
     try {
-      await api.post(`/api/public/stores/${slug}/events`, { eventType });
+      await api.post(`/api/public/stores/${slug}/events`, { eventType, campaign });
     } catch (err) {
       // Analytics recording should fail silently so customer flow is never blocked
       console.warn('Analytics event record failed', err);

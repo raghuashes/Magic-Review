@@ -21,6 +21,9 @@ public class AnalyticsEvent {
     @Column(name = "event_type", nullable = false, length = 50)
     private EventType eventType;
 
+    @Column(name = "campaign", length = 100)
+    private String campaign;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private OffsetDateTime createdAt;
 
@@ -30,6 +33,12 @@ public class AnalyticsEvent {
     public AnalyticsEvent(Store store, EventType eventType) {
         this.store = store;
         this.eventType = eventType;
+    }
+
+    public AnalyticsEvent(Store store, EventType eventType, String campaign) {
+        this.store = store;
+        this.eventType = eventType;
+        this.campaign = campaign;
     }
 
     @PrePersist
@@ -59,6 +68,14 @@ public class AnalyticsEvent {
 
     public void setEventType(EventType eventType) {
         this.eventType = eventType;
+    }
+
+    public String getCampaign() {
+        return campaign;
+    }
+
+    public void setCampaign(String campaign) {
+        this.campaign = campaign;
     }
 
     public OffsetDateTime getCreatedAt() {
