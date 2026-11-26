@@ -11,7 +11,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { storeService } from '../services/storeService';
-import { Store, StoreRequest } from '../types';
+import { Store, StoreRequest, BUSINESS_CATEGORIES } from '../types';
 import { QRCodeModal } from '../components/QRCodeModal';
 import { Toast } from '../components/Toast';
 import { getErrorMessage } from '../services/api';
@@ -27,6 +27,8 @@ export const DashboardPage: React.FC = () => {
   const [newStore, setNewStore] = useState<StoreRequest>({
     name: '',
     slug: '',
+    businessCategory: 'Restaurant',
+    specialties: '',
     description: '',
     googleReviewUrl: '',
     primaryColor: '#4F46E5',
@@ -62,6 +64,8 @@ export const DashboardPage: React.FC = () => {
       setNewStore({
         name: '',
         slug: '',
+        businessCategory: 'Restaurant',
+        specialties: '',
         description: '',
         googleReviewUrl: '',
         primaryColor: '#4F46E5',
@@ -243,6 +247,37 @@ export const DashboardPage: React.FC = () => {
                   value={newStore.name}
                   onChange={(e) => setNewStore({ ...newStore, name: e.target.value })}
                   placeholder="e.g. Sri Sai Jewellers"
+                  className="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Business Category *
+                </label>
+                <select
+                  value={newStore.businessCategory || 'Restaurant'}
+                  onChange={(e) => setNewStore({ ...newStore, businessCategory: e.target.value })}
+                  className="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium"
+                >
+                  {BUSINESS_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-slate-400 mt-0.5">Seeds your store with tailored category attributes and vocabulary.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                  Specialties / Offerings (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={newStore.specialties || ''}
+                  onChange={(e) => setNewStore({ ...newStore, specialties: e.target.value })}
+                  placeholder="e.g. Biryani, family dining, fresh juices"
                   className="w-full px-4 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
               </div>

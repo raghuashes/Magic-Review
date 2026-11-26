@@ -2,8 +2,10 @@ package com.magicreview.controller;
 
 import com.magicreview.dto.AttributeRequest;
 import com.magicreview.dto.AttributeResponse;
+import com.magicreview.dto.SuggestAttributesResponse;
 import com.magicreview.security.UserDetailsImpl;
 import com.magicreview.service.StoreAttributeService;
+import com.magicreview.util.CategoryDefaults;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,7 +19,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/stores/{storeId}/attributes")
-@Tag(name = "Store Attributes", description = "CRUD operations for store review attribute tags")
+@Tag(name = "Store Attributes", description = "CRUD and smart AI operations for store review attribute tags")
 public class StoreAttributeController {
 
     private final StoreAttributeService attributeService;
@@ -41,6 +43,48 @@ public class StoreAttributeController {
                                                              @Valid @RequestBody AttributeRequest request) {
         AttributeResponse response = attributeService.createAttribute(storeId, userPrincipal.getId(), request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping("/batch")
+    @Operation(summary = "Batch create multiple attributes for a store (e.g. from AI suggestions or templates)")
+    public ResponseEntity<List<AttributeResponse>> batchCreateAttributes(@AuthenticationPrincipal UserDetailsImpl userPrincipal,
+                                                                         @PathVariable UUID storeId,
+                                                                         @RequestBody List<AttributeRequest> requests) {
+        List<AttributeResponse> responses = attributeService.batchCreateAttributes(storeId, userPrincipal.getId(), requests);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
+    }
+
+    @PostMapping("/suggest-ai")
+    @Operation(summary = "Generate tailored attribute suggestions using AI based on category and store specialties")
+    public ResponseEntity<SuggestAttributesResponse> suggestAttributesWithAi(@AuthenticationPrincipal UserDetailsImpl userPrincipal,
+                                                                            @PathVariable UUID storeId) {
+        SuggestAttributesResponse response = attributeService.suggestAttributesWithAi(storeId, userPrincipal.getId());
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/defaults")
+    @Operation(summary = "Get default recommended attributes for a business category")
+    public ResponseEntity<List<String>> getCategoryDefaults(@RequestParam(required = false) String category) {
+        List<String> defaults = CategoryDefaults.getDefaultsForCategory(category);
+        return ResponseEntity.ok(defaults);
+    }
+
+    @PostMapping("/apply-defaults")
+    @Operation(summary = "Apply default attributes for the store's business category (preserves existing custom attributes)")
+    public ResponseEntity<List<AttributeResponse>> applyCategoryDefaults(@AuthenticationPrincipal UserDetailsImpl userPrincipal,
+                                                                         @PathVariable UUID storeId,
+                                                                         @RequestParam(required = false) String category) {
+        List<AttributeResponse> attributes = attributeService.applyCategoryDefaults(storeId, userPrincipal.getId(), category);
+        return ResponseEntity.ok(attributes);
+    }
+
+    @PutMapping("/reorder")
+    @Operation(summary = "Reorder attributes sequence")
+    public ResponseEntity<List<AttributeResponse>> reorderAttributes(@AuthenticationPrincipal UserDetailsImpl userPrincipal,
+                                                                     @PathVariable UUID storeId,
+                                                                     @RequestBody List<UUID> attributeIdsInOrder) {
+        List<AttributeResponse> reordered = attributeService.reorderAttributes(storeId, userPrincipal.getId(), attributeIdsInOrder);
+        return ResponseEntity.ok(reordered);
     }
 
     @PutMapping("/{attributeId}")

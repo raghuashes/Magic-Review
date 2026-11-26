@@ -10,6 +10,7 @@ import com.magicreview.integration.DemoReviewGenerator;
 import com.magicreview.integration.GeminiApiClient;
 import com.magicreview.repository.StoreRepository;
 import com.magicreview.service.AiReviewService;
+import com.magicreview.util.CategoryDefaults;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -61,6 +62,8 @@ public class AiReviewServiceTest {
                 "https://g.page/r/srisaijewellers/review",
                 true
         );
+        mockStore.setBusinessCategory("Jewellery Store");
+        mockStore.setSpecialties("Bridal gold, diamond necklaces, light weight daily wear");
     }
 
     @Test
@@ -68,7 +71,7 @@ public class AiReviewServiceTest {
     void testEnglishReviewGeneration() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.ENGLISH), any(), any(), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), eq(LanguageStyle.ENGLISH), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Triggers fallback demo generator
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -96,7 +99,7 @@ public class AiReviewServiceTest {
     void testTeluguEnglishMixReviewGeneration() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Triggers fallback demo generator
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -130,7 +133,7 @@ public class AiReviewServiceTest {
     void testHinglishReviewGeneration() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.HINGLISH), any(), any(), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), eq(LanguageStyle.HINGLISH), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Triggers fallback demo generator
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -164,7 +167,7 @@ public class AiReviewServiceTest {
     void testNonRepetitionOnRegenerate() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Fallback demo engine
 
         List<String> seenReviews = new ArrayList<>();
@@ -199,7 +202,7 @@ public class AiReviewServiceTest {
                 .thenReturn(Optional.of(mockStore));
 
         String mockAiOutput = "\"Sri Sai Jewellers lo bridal collection chala awesome ga undhi. Staff helped us patiently!\"";
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
                 .thenReturn(Optional.of(mockAiOutput));
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -218,5 +221,46 @@ public class AiReviewServiceTest {
         assertFalse(response.getReviewText().startsWith("\""));
         assertFalse(response.getReviewText().endsWith("\""));
         assertFalse(TELUGU_SCRIPT_PATTERN.matcher(response.getReviewText()).find());
+    }
+
+    @Test
+    @DisplayName("CategoryDefaults should supply all 24 categories with non-empty default attributes")
+    void testCategoryDefaultsCoverage() {
+        assertEquals(24, CategoryDefaults.ALL_CATEGORIES.size());
+
+        for (String cat : CategoryDefaults.ALL_CATEGORIES) {
+            List<String> defaults = CategoryDefaults.getDefaultsForCategory(cat);
+            assertNotNull(defaults, "Defaults for " + cat + " must not be null");
+            assertFalse(defaults.isEmpty(), "Defaults for " + cat + " must not be empty");
+            assertTrue(defaults.size() >= 6, "Defaults for " + cat + " should have at least 6 attributes");
+        }
+    }
+
+    @Test
+    @DisplayName("Category-Aware Demo Review Generator should use restaurant terms for restaurant and jewellery terms for jewellery")
+    void testCategoryAwareVocabularyGeneration() {
+        // Test Restaurant
+        String restaurantReview = demoReviewGenerator.generateReview(
+                "Spice Garden", "Dinner", "Restaurant", "Biryani, Tandoori",
+                List.of("Food taste", "Ambience"), "Loved the biryani", LanguageStyle.ENGLISH, List.of(), 5, "FRIENDLY"
+        );
+        assertNotNull(restaurantReview);
+        String restLower = restaurantReview.toLowerCase();
+        assertTrue(restLower.contains("food") || restLower.contains("meal") || restLower.contains("dining") || restLower.contains("delicious") || restLower.contains("flavours") || restLower.contains("taste"),
+                "Restaurant review should use culinary vocabulary");
+        assertFalse(restLower.contains("jewellery") || restLower.contains("gold") || restLower.contains("diamond"),
+                "Restaurant review must not contain jewellery terms");
+
+        // Test Jewellery
+        String jewelleryReview = demoReviewGenerator.generateReview(
+                "Sri Sai Jewellers", "Gold Bangles", "Jewellery Store", "Gold & Diamond jewellery",
+                List.of("Jewellery design", "Craftsmanship"), null, LanguageStyle.ENGLISH, List.of(), 5, "FRIENDLY"
+        );
+        assertNotNull(jewelleryReview);
+        String jewLower = jewelleryReview.toLowerCase();
+        assertTrue(jewLower.contains("jewellery") || jewLower.contains("craftsmanship") || jewLower.contains("designs") || jewLower.contains("shopping"),
+                "Jewellery review should use jewellery vocabulary");
+        assertFalse(jewLower.contains("delicious") || jewLower.contains("tasty") || jewLower.contains("flavour"),
+                "Jewellery review must not contain culinary terms");
     }
 }

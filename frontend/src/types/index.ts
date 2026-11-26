@@ -4,6 +4,35 @@ export type LanguageStyle = 'ENGLISH' | 'TELUGU_ENGLISH_MIX' | 'HINGLISH';
 
 export type ReviewTone = 'FRIENDLY' | 'PROFESSIONAL' | 'ENTHUSIASTIC' | 'SHORT';
 
+export const BUSINESS_CATEGORIES = [
+  'Restaurant',
+  'Cafe / Coffee Shop',
+  'Bakery / Sweets',
+  'Hotel / Resort',
+  'Jewellery Store',
+  'Clothing / Fashion Store',
+  'Footwear Store',
+  'Supermarket / Grocery Store',
+  'Electronics Store',
+  'Mobile / Computer Store',
+  'Salon / Beauty Parlour',
+  'Spa / Wellness Centre',
+  'Gym / Fitness Centre',
+  'Healthcare / Clinic',
+  'Dental Clinic',
+  'Education / Coaching Centre',
+  'Automobile / Car Service',
+  'Travel / Tourism',
+  'Real Estate',
+  'Home Decor / Furniture',
+  'Photography / Events',
+  'E-commerce / Online Store',
+  'Professional Services',
+  'Other / Custom Business',
+] as const;
+
+export type BusinessCategory = typeof BUSINESS_CATEGORIES[number];
+
 export type EventType =
   | 'PAGE_VIEW'
   | 'DRAFT_GENERATED'
@@ -31,6 +60,8 @@ export interface Store {
   name: string;
   slug: string;
   description?: string;
+  specialties?: string;
+  targetCustomers?: string;
   logoUrl?: string;
   posterUrl?: string;
   primaryColor?: string;
@@ -57,6 +88,8 @@ export interface StoreRequest {
   name: string;
   slug?: string;
   description?: string;
+  specialties?: string;
+  targetCustomers?: string;
   logoUrl?: string;
   posterUrl?: string;
   primaryColor?: string;
@@ -90,19 +123,30 @@ export interface CategoryRequest {
   displayOrder?: number;
 }
 
+export type AttributeSource = 'DEFAULT' | 'AI_SUGGESTED' | 'MERCHANT_CREATED';
+
 export interface Attribute {
   id: string;
   storeId: string;
   label: string;
   active: boolean;
   displayOrder: number;
+  source?: AttributeSource;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface AttributeRequest {
   label: string;
   active?: boolean;
   displayOrder?: number;
+  source?: AttributeSource;
+}
+
+export interface SuggestAttributesResponse {
+  category: string;
+  storeName: string;
+  suggestedAttributes: string[];
 }
 
 export interface PublicStore {
@@ -110,6 +154,8 @@ export interface PublicStore {
   name: string;
   slug: string;
   description?: string;
+  specialties?: string;
+  targetCustomers?: string;
   logoUrl?: string;
   posterUrl?: string;
   primaryColor?: string;

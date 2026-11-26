@@ -53,6 +53,11 @@ public class StoreRequest {
     @Size(max = 100, message = "Business category cannot exceed 100 characters")
     private String businessCategory;
 
+    private String specialties;
+
+    @Size(max = 255, message = "Target customers cannot exceed 255 characters")
+    private String targetCustomers;
+
     private String welcomeMessage;
 
     private String thankYouMessage;
@@ -212,5 +217,21 @@ public class StoreRequest {
 
     public void setThankYouMessage(String thankYouMessage) {
         this.thankYouMessage = thankYouMessage;
+    }
+
+    public String getSpecialties() {
+        return specialties;
+    }
+
+    public void setSpecialties(String specialties) {
+        this.specialties = specialties;
+    }
+
+    public String getTargetCustomers() {
+        return targetCustomers;
+    }
+
+    public void setTargetCustomers(String targetCustomers) {
+        this.targetCustomers = targetCustomers;
     }
 }

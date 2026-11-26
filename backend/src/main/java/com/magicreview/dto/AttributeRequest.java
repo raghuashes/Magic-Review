@@ -13,6 +13,8 @@ public class AttributeRequest {
 
     private Integer displayOrder = 0;
 
+    private String source = "MERCHANT_CREATED";
+
     public AttributeRequest() {
     }
 
@@ -20,6 +22,14 @@ public class AttributeRequest {
         this.label = label;
         this.active = active;
         this.displayOrder = displayOrder;
+        this.source = "MERCHANT_CREATED";
+    }
+
+    public AttributeRequest(String label, Boolean active, Integer displayOrder, String source) {
+        this.label = label;
+        this.active = active;
+        this.displayOrder = displayOrder;
+        this.source = source != null && !source.isBlank() ? source : "MERCHANT_CREATED";
     }
 
     public String getLabel() {
@@ -44,5 +54,13 @@ public class AttributeRequest {
 
     public void setDisplayOrder(Integer displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 }

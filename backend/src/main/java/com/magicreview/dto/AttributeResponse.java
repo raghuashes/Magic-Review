@@ -9,17 +9,23 @@ public class AttributeResponse {
     private String label;
     private Boolean active;
     private Integer displayOrder;
+    private String source = "MERCHANT_CREATED";
     private OffsetDateTime createdAt;
 
     public AttributeResponse() {
     }
 
     public AttributeResponse(UUID id, UUID storeId, String label, Boolean active, Integer displayOrder, OffsetDateTime createdAt) {
+        this(id, storeId, label, active, displayOrder, "MERCHANT_CREATED", createdAt);
+    }
+
+    public AttributeResponse(UUID id, UUID storeId, String label, Boolean active, Integer displayOrder, String source, OffsetDateTime createdAt) {
         this.id = id;
         this.storeId = storeId;
         this.label = label;
         this.active = active;
         this.displayOrder = displayOrder;
+        this.source = source != null && !source.isBlank() ? source : "MERCHANT_CREATED";
         this.createdAt = createdAt;
     }
 
@@ -61,6 +67,14 @@ public class AttributeResponse {
 
     public void setDisplayOrder(Integer displayOrder) {
         this.displayOrder = displayOrder;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public void setSource(String source) {
+        this.source = source;
     }
 
     public OffsetDateTime getCreatedAt() {

@@ -22,10 +22,17 @@ import {
   Phone,
   MapPin,
   Sparkles,
-  Eye
+  Eye,
+  ArrowUp,
+  ArrowDown,
+  Edit2,
+  Check,
+  X,
+  Wand2,
+  RefreshCw
 } from 'lucide-react';
 import { storeService } from '../services/storeService';
-import { Store, Category, Attribute, StoreRequest } from '../types';
+import { Store, Category, Attribute, StoreRequest, BUSINESS_CATEGORIES } from '../types';
 import { QRCodeModal } from '../components/QRCodeModal';
 import { Toast } from '../components/Toast';
 import { getErrorMessage } from '../services/api';
@@ -58,19 +65,6 @@ const POSTER_PRESETS = [
   },
 ];
 
-const CATEGORY_PRESETS = [
-  'Jewellery Store',
-  'Restaurant & Dining',
-  'Cafe & Bakery',
-  'Salon & Beauty Spa',
-  'Clothing & Apparel',
-  'Clinic & Healthcare',
-  'Automobile & Repair',
-  'Electronics & Retail',
-  'Fitness & Gym',
-  'General Local Business'
-];
-
 type ActiveTab = 'business' | 'branding' | 'social' | 'google' | 'tags';
 
 export const StoreDetailPage: React.FC = () => {
@@ -90,7 +84,9 @@ export const StoreDetailPage: React.FC = () => {
     name: '',
     slug: '',
     description: '',
-    businessCategory: 'General Local Business',
+    specialties: '',
+    targetCustomers: '',
+    businessCategory: 'Restaurant',
     businessEmail: '',
     phone: '',
     address: '',
@@ -112,6 +108,22 @@ export const StoreDetailPage: React.FC = () => {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newAttributeLabel, setNewAttributeLabel] = useState('');
 
+  // AI Attribute Suggestions State
+  const [isSuggestingAi, setIsSuggestingAi] = useState(false);
+  const [suggestedAttributes, setSuggestedAttributes] = useState<string[]>([]);
+  const [selectedSuggestions, setSelectedSuggestions] = useState<Record<number, boolean>>({});
+  const [editingSuggestionIdx, setEditingSuggestionIdx] = useState<number | null>(null);
+  const [editingSuggestionText, setEditingSuggestionText] = useState('');
+  const [showAiDrawer, setShowAiDrawer] = useState(false);
+  const [isBatchAdding, setIsBatchAdding] = useState(false);
+
+  // Category Defaults State
+  const [isApplyingDefaults, setIsApplyingDefaults] = useState(false);
+
+  // In-place Attribute Edit State
+  const [editingAttributeId, setEditingAttributeId] = useState<string | null>(null);
+  const [editingAttributeLabel, setEditingAttributeLabel] = useState('');
+
   // QR Modal State
   const [showQrModal, setShowQrModal] = useState(false);
 
@@ -132,7 +144,9 @@ export const StoreDetailPage: React.FC = () => {
           name: storeData.name || '',
           slug: storeData.slug || '',
           description: storeData.description || '',
-          businessCategory: storeData.businessCategory || 'General Local Business',
+          specialties: storeData.specialties || '',
+          targetCustomers: storeData.targetCustomers || '',
+          businessCategory: storeData.businessCategory || 'Restaurant',
           businessEmail: storeData.businessEmail || '',
           phone: storeData.phone || '',
           address: storeData.address || '',
@@ -165,7 +179,7 @@ export const StoreDetailPage: React.FC = () => {
     try {
       const updated = await storeService.updateStore(id, formData);
       setStore(updated);
-      setToastMessage('Store profile, branding, and social settings saved successfully!');
+      setToastMessage('Store profile, branding, and business details saved successfully!');
     } catch (err) {
       alert(getErrorMessage(err));
     } finally {
@@ -213,10 +227,14 @@ export const StoreDetailPage: React.FC = () => {
     e.preventDefault();
     if (!id || !newAttributeLabel.trim()) return;
     try {
-      const created = await storeService.createAttribute(id, { label: newAttributeLabel.trim(), active: true });
+      const created = await storeService.createAttribute(id, {
+        label: newAttributeLabel.trim(),
+        active: true,
+        source: 'MERCHANT_CREATED',
+      });
       setAttributes((prev) => [...prev, created]);
       setNewAttributeLabel('');
-      setToastMessage('Attribute tag added!');
+      setToastMessage('Custom attribute added!');
     } catch (err) {
       alert(getErrorMessage(err));
     }
@@ -225,7 +243,11 @@ export const StoreDetailPage: React.FC = () => {
   const handleToggleAttribute = async (attr: Attribute) => {
     if (!id) return;
     try {
-      const updated = await storeService.updateAttribute(id, attr.id, { label: attr.label, active: !attr.active });
+      const updated = await storeService.updateAttribute(id, attr.id, {
+        label: attr.label,
+        active: !attr.active,
+        source: attr.source,
+      });
       setAttributes((prev) => prev.map((a) => (a.id === attr.id ? updated : a)));
     } catch (err) {
       alert(getErrorMessage(err));
@@ -240,6 +262,112 @@ export const StoreDetailPage: React.FC = () => {
       setToastMessage('Attribute tag removed');
     } catch (err) {
       alert(getErrorMessage(err));
+    }
+  };
+
+  const handleSuggestAttributesWithAi = async () => {
+    if (!id) return;
+    setIsSuggestingAi(true);
+    try {
+      const res = await storeService.suggestAttributesWithAi(id);
+      setSuggestedAttributes(res.suggestedAttributes);
+      const initialSelected: Record<number, boolean> = {};
+      res.suggestedAttributes.forEach((_, idx) => {
+        initialSelected[idx] = true;
+      });
+      setSelectedSuggestions(initialSelected);
+      setShowAiDrawer(true);
+      setToastMessage(`AI suggested ${res.suggestedAttributes.length} attributes for ${res.category}!`);
+    } catch (err) {
+      alert(getErrorMessage(err));
+    } finally {
+      setIsSuggestingAi(false);
+    }
+  };
+
+  const handleApplyDefaults = async () => {
+    if (!id) return;
+    setIsApplyingDefaults(true);
+    try {
+      const updated = await storeService.applyCategoryDefaults(id, formData.businessCategory);
+      setAttributes(updated);
+      setToastMessage(`Category defaults applied for ${formData.businessCategory || 'business'}!`);
+    } catch (err) {
+      alert(getErrorMessage(err));
+    } finally {
+      setIsApplyingDefaults(false);
+    }
+  };
+
+  const handleAcceptSelectedSuggestions = async () => {
+    if (!id) return;
+    const selectedLabels = suggestedAttributes
+      .filter((_, idx) => selectedSuggestions[idx])
+      .map((s) => s.trim())
+      .filter((s) => Boolean(s));
+
+    if (selectedLabels.length === 0) {
+      alert('Please select at least one attribute suggestion to add.');
+      return;
+    }
+
+    setIsBatchAdding(true);
+    try {
+      const requests = selectedLabels.map((label) => ({
+        label,
+        active: true,
+        source: 'AI_SUGGESTED' as const,
+      }));
+      const created = await storeService.batchCreateAttributes(id, requests);
+      setAttributes((prev) => [...prev, ...created]);
+      setShowAiDrawer(false);
+      setSuggestedAttributes([]);
+      setSelectedSuggestions({});
+      setToastMessage(`Added ${created.length} AI-suggested attributes!`);
+    } catch (err) {
+      alert(getErrorMessage(err));
+    } finally {
+      setIsBatchAdding(false);
+    }
+  };
+
+  const handleSaveEditedAttribute = async (attr: Attribute) => {
+    if (!id || !editingAttributeLabel.trim()) {
+      setEditingAttributeId(null);
+      return;
+    }
+    try {
+      const updated = await storeService.updateAttribute(id, attr.id, {
+        label: editingAttributeLabel.trim(),
+        active: attr.active,
+        source: attr.source,
+      });
+      setAttributes((prev) => prev.map((a) => (a.id === attr.id ? updated : a)));
+      setEditingAttributeId(null);
+      setToastMessage('Attribute updated!');
+    } catch (err) {
+      alert(getErrorMessage(err));
+    }
+  };
+
+  const handleMoveAttribute = async (idx: number, direction: 'up' | 'down') => {
+    if (!id) return;
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    if (targetIdx < 0 || targetIdx >= attributes.length) return;
+
+    const newAttributes = [...attributes];
+    const temp = newAttributes[idx];
+    newAttributes[idx] = newAttributes[targetIdx];
+    newAttributes[targetIdx] = temp;
+
+    setAttributes(newAttributes);
+    try {
+      await storeService.reorderAttributes(
+        id,
+        newAttributes.map((a) => a.id)
+      );
+    } catch (err) {
+      console.error('Failed to save reordered attributes', err);
     }
   };
 
@@ -393,8 +521,8 @@ export const StoreDetailPage: React.FC = () => {
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <Tag className="w-3.5 h-3.5" />
-          Categories & Tags
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          Smart Attributes & Categories
         </button>
       </div>
 
@@ -430,19 +558,67 @@ export const StoreDetailPage: React.FC = () => {
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                      Business Category
+                      Business Category *
                     </label>
                     <select
-                      value={formData.businessCategory || 'General Local Business'}
+                      value={formData.businessCategory || 'Restaurant'}
                       onChange={(e) => setFormData({ ...formData, businessCategory: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-white font-medium"
                     >
-                      {CATEGORY_PRESETS.map((cat) => (
+                      {BUSINESS_CATEGORIES.map((cat) => (
                         <option key={cat} value={cat}>
                           {cat}
                         </option>
                       ))}
                     </select>
+                  </div>
+                </div>
+
+                {/* Category Context Banner */}
+                <div className="p-3.5 bg-gradient-to-r from-indigo-50/80 to-purple-50/60 border border-indigo-100 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 text-indigo-900">
+                    <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
+                    <span>
+                      Selected Industry: <strong>{formData.businessCategory || 'Restaurant'}</strong>. Review vocabulary and smart attributes adapt to this industry.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('tags')}
+                    className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-[11px] font-bold shrink-0 transition-colors shadow-sm text-center"
+                  >
+                    Manage Attributes ✨
+                  </button>
+                </div>
+
+                {/* Specialties and Target Customers */}
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Products / Services & Specialties
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.specialties || ''}
+                      onChange={(e) => setFormData({ ...formData, specialties: e.target.value })}
+                      placeholder="e.g. Biryani, dosa, family dining, fresh juices"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">Key items or signature offerings customers come for.</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Target Customers (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.targetCustomers || ''}
+                      onChange={(e) => setFormData({ ...formData, targetCustomers: e.target.value })}
+                      placeholder="e.g. Families, tech professionals, bridal shoppers"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">Helps AI tune customer tone and perspective.</p>
                   </div>
                 </div>
 
@@ -846,17 +1022,17 @@ export const StoreDetailPage: React.FC = () => {
               </div>
             )}
 
-            {/* TAB 5: Categories & Tags */}
+            {/* TAB 5: Smart Attributes & Categories */}
             {activeTab === 'tags' && (
               <div className="space-y-6">
-                {/* Categories visited for */}
+                {/* 1. Categories visited for */}
                 <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div className="flex items-center gap-2 text-slate-900">
                       <Layers className="w-5 h-5 text-indigo-600" />
                       <div>
-                        <h2 className="text-base font-bold">1. Visit Categories</h2>
-                        <p className="text-xs text-slate-500">What service or purchase customers visit your business for.</p>
+                        <h2 className="text-base font-bold">1. Customer Visit Categories</h2>
+                        <p className="text-xs text-slate-500">What service or purchase customers visit your store for.</p>
                       </div>
                     </div>
                   </div>
@@ -871,94 +1047,446 @@ export const StoreDetailPage: React.FC = () => {
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+                      className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors shadow-sm"
                     >
                       <Plus className="w-4 h-4" /> Add
                     </button>
                   </form>
 
                   <div className="space-y-2">
-                    {categories.map((cat) => (
-                      <div
-                        key={cat.id}
-                        className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-slate-50 transition-colors"
-                      >
-                        <span className={`text-sm font-bold ${cat.active ? 'text-slate-800' : 'text-slate-400 line-through'}`}>
-                          {cat.name}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleCategory(cat)}
-                            className={`text-xs px-2.5 py-1 rounded-lg font-bold border transition-colors ${
-                              cat.active
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                : 'bg-slate-200 text-slate-600 border-slate-300'
-                            }`}
-                          >
-                            {cat.active ? 'Enabled' : 'Disabled'}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteCategory(cat.id)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                    {categories.length === 0 ? (
+                      <p className="text-xs text-slate-400 italic py-2">No visit categories added yet.</p>
+                    ) : (
+                      categories.map((cat) => (
+                        <div
+                          key={cat.id}
+                          className="flex items-center justify-between p-3 rounded-2xl border border-slate-100 bg-slate-50/70 hover:bg-slate-50 transition-colors"
+                        >
+                          <span className={`text-sm font-bold ${cat.active ? 'text-slate-800' : 'text-slate-400 line-through'}`}>
+                            {cat.name}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleCategory(cat)}
+                              className={`text-xs px-2.5 py-1 rounded-lg font-bold border transition-colors ${
+                                cat.active
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  : 'bg-slate-200 text-slate-600 border-slate-300'
+                              }`}
+                            >
+                              {cat.active ? 'Enabled' : 'Disabled'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCategory(cat.id)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
 
-                {/* Experience Tags */}
-                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-5">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                {/* 2. Smart Experience Attributes */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-sm space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
                     <div className="flex items-center gap-2 text-slate-900">
                       <Tag className="w-5 h-5 text-indigo-600" />
                       <div>
-                        <h2 className="text-base font-bold">2. Customer Experience Tags</h2>
-                        <p className="text-xs text-slate-500">Quick-tap tags customers highlight (e.g. Helpful staff, Quick delivery).</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="text-base font-bold">2. Smart Experience Attributes</h2>
+                          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            {formData.businessCategory || 'Restaurant'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500">
+                          One-tap feedback highlights shown to customers when crafting their genuine reviews.
+                        </p>
                       </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={handleSuggestAttributesWithAi}
+                        disabled={isSuggestingAi}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition-all disabled:opacity-50"
+                      >
+                        {isSuggestingAi ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Suggesting with AI...
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="w-3.5 h-3.5" />
+                            Suggest Attributes with AI
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleApplyDefaults}
+                        disabled={isApplyingDefaults}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors disabled:opacity-50"
+                      >
+                        {isApplyingDefaults ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Loading Defaults...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 text-slate-600" />
+                            Apply Category Defaults
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
 
+                  {/* AI Suggestions Review Drawer */}
+                  {showAiDrawer && suggestedAttributes.length > 0 && (
+                    <div className="p-5 rounded-2xl bg-gradient-to-br from-purple-50/80 via-indigo-50/50 to-slate-50 border border-purple-200 shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-purple-600" />
+                          <h3 className="text-xs font-black uppercase tracking-wider text-purple-950">
+                            AI Suggested Attributes for {formData.businessCategory || 'Store'}
+                          </h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowAiDrawer(false)}
+                          className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-white"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <p className="text-xs text-slate-600">
+                        Select and optionally edit the AI suggestions before adding them to your customer review page:
+                      </p>
+
+                      <div className="grid sm:grid-cols-2 gap-2 max-h-60 overflow-y-auto pr-1">
+                        {suggestedAttributes.map((attr, idx) => (
+                          <div
+                            key={idx}
+                            className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 transition-colors ${
+                              selectedSuggestions[idx]
+                                ? 'bg-white border-purple-300 shadow-xs'
+                                : 'bg-white/60 border-slate-200 opacity-60'
+                            }`}
+                          >
+                            <label className="flex items-center gap-2.5 flex-1 cursor-pointer min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={Boolean(selectedSuggestions[idx])}
+                                onChange={(e) =>
+                                  setSelectedSuggestions({
+                                    ...selectedSuggestions,
+                                    [idx]: e.target.checked,
+                                  })
+                                }
+                                className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
+                              />
+                              {editingSuggestionIdx === idx ? (
+                                <input
+                                  type="text"
+                                  value={editingSuggestionText}
+                                  onChange={(e) => setEditingSuggestionText(e.target.value)}
+                                  className="w-full px-2 py-0.5 text-xs rounded border border-purple-400 focus:outline-none"
+                                  autoFocus
+                                />
+                              ) : (
+                                <span className="text-xs font-semibold text-slate-800 truncate">{attr}</span>
+                              )}
+                            </label>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              {editingSuggestionIdx === idx ? (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (editingSuggestionText.trim()) {
+                                        const updated = [...suggestedAttributes];
+                                        updated[idx] = editingSuggestionText.trim();
+                                        setSuggestedAttributes(updated);
+                                      }
+                                      setEditingSuggestionIdx(null);
+                                    }}
+                                    className="p-1 text-emerald-600 hover:bg-emerald-50 rounded"
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingSuggestionIdx(null)}
+                                    className="p-1 text-slate-400 hover:bg-slate-100 rounded"
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingSuggestionIdx(idx);
+                                    setEditingSuggestionText(attr);
+                                  }}
+                                  className="p-1 text-slate-400 hover:text-purple-600 rounded"
+                                  title="Edit attribute label"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-2 border-t border-purple-200/60 flex-wrap gap-2">
+                        <div className="flex items-center gap-3 text-xs">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const allSel: Record<number, boolean> = {};
+                              suggestedAttributes.forEach((_, idx) => (allSel[idx] = true));
+                              setSelectedSuggestions(allSel);
+                            }}
+                            className="text-purple-700 font-bold hover:underline"
+                          >
+                            Select All
+                          </button>
+                          <span className="text-slate-300">|</span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedSuggestions({})}
+                            className="text-slate-500 font-medium hover:underline"
+                          >
+                            Deselect All
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowAiDrawer(false)}
+                            className="px-3 py-1.5 rounded-xl border border-slate-300 text-slate-600 text-xs font-semibold hover:bg-white"
+                          >
+                            Dismiss
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleAcceptSelectedSuggestions}
+                            disabled={isBatchAdding}
+                            className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-sm inline-flex items-center gap-1.5 disabled:opacity-50"
+                          >
+                            {isBatchAdding ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                Adding...
+                              </>
+                            ) : (
+                              <>
+                                <Plus className="w-3.5 h-3.5" />
+                                Add Selected Attributes
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Add Custom Attribute Form */}
                   <form onSubmit={handleAddAttribute} className="flex gap-2">
                     <input
                       type="text"
                       value={newAttributeLabel}
                       onChange={(e) => setNewAttributeLabel(e.target.value)}
-                      placeholder="e.g. Great Ambience, Transparent Pricing, Friendly Doctor"
+                      placeholder="Add custom attribute (e.g. Biryani taste, Craftsmanship, Trainer support)"
                       className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     />
                     <button
                       type="submit"
-                      className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors"
+                      className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold inline-flex items-center gap-1.5 transition-colors shadow-sm shrink-0"
                     >
-                      <Plus className="w-4 h-4" /> Add
+                      <Plus className="w-4 h-4" /> Add Custom
                     </button>
                   </form>
 
-                  <div className="flex flex-wrap gap-2">
-                    {attributes.map((attr) => (
-                      <div
-                        key={attr.id}
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-colors ${
-                          attr.active ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-400 border-slate-200 line-through'
-                        }`}
-                      >
-                        <span onClick={() => handleToggleAttribute(attr)} className="cursor-pointer">
-                          {attr.label}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteAttribute(attr.id)}
-                          className="text-slate-400 hover:text-rose-600 transition-colors"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                  {/* Attribute Management List */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-500 px-1">
+                      <span>Configured Attributes ({attributes.length})</span>
+                      <span>Active: {attributes.filter((a) => a.active).length}</span>
+                    </div>
+
+                    {attributes.length === 0 ? (
+                      <div className="p-8 text-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 space-y-3">
+                        <Tag className="w-8 h-8 text-slate-400 mx-auto" />
+                        <div>
+                          <p className="text-sm font-bold text-slate-700">No attributes configured yet</p>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Click "Suggest Attributes with AI" or "Apply Category Defaults" to populate them automatically.
+                          </p>
+                        </div>
+                        <div className="flex items-center justify-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={handleSuggestAttributesWithAi}
+                            className="px-3.5 py-1.5 bg-indigo-600 text-white text-xs font-bold rounded-xl shadow-xs hover:bg-indigo-700"
+                          >
+                            Suggest with AI
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleApplyDefaults}
+                            className="px-3.5 py-1.5 bg-white border border-slate-300 text-slate-700 text-xs font-bold rounded-xl hover:bg-slate-50"
+                          >
+                            Apply Defaults
+                          </button>
+                        </div>
                       </div>
-                    ))}
+                    ) : (
+                      <div className="space-y-2">
+                        {attributes.map((attr, idx) => {
+                          const isFirst = idx === 0;
+                          const isLast = idx === attributes.length - 1;
+                          const isEditing = editingAttributeId === attr.id;
+
+                          return (
+                            <div
+                              key={attr.id}
+                              className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                                attr.active
+                                  ? 'bg-slate-50/80 border-slate-200 hover:bg-slate-50'
+                                  : 'bg-slate-100/50 border-slate-200 opacity-60'
+                              }`}
+                            >
+                              {/* Reorder and Badge and Label */}
+                              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                {/* Up/Down Reorder */}
+                                <div className="flex flex-col gap-0.5 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveAttribute(idx, 'up')}
+                                    disabled={isFirst}
+                                    className="p-1 text-slate-400 hover:text-indigo-600 disabled:opacity-20 rounded"
+                                    title="Move Up"
+                                  >
+                                    <ArrowUp className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveAttribute(idx, 'down')}
+                                    disabled={isLast}
+                                    className="p-1 text-slate-400 hover:text-indigo-600 disabled:opacity-20 rounded"
+                                    title="Move Down"
+                                  >
+                                    <ArrowDown className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+
+                                {/* Source Badge */}
+                                {attr.source === 'DEFAULT' ? (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 shrink-0">
+                                    Default
+                                  </span>
+                                ) : attr.source === 'AI_SUGGESTED' ? (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-700 shrink-0 inline-flex items-center gap-1">
+                                    <Sparkles className="w-2.5 h-2.5" /> AI Suggested
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 shrink-0">
+                                    Custom
+                                  </span>
+                                )}
+
+                                {/* Attribute Label or Edit Mode */}
+                                {isEditing ? (
+                                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                    <input
+                                      type="text"
+                                      value={editingAttributeLabel}
+                                      onChange={(e) => setEditingAttributeLabel(e.target.value)}
+                                      className="px-2 py-1 rounded-lg border border-indigo-400 text-xs font-semibold focus:outline-none w-full"
+                                      autoFocus
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSaveEditedAttribute(attr)}
+                                      className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                                      title="Save"
+                                    >
+                                      <Check className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingAttributeId(null)}
+                                      className="p-1.5 text-slate-400 hover:bg-slate-200 rounded-lg"
+                                      title="Cancel"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <span
+                                      className={`text-sm font-semibold truncate ${
+                                        attr.active ? 'text-slate-900' : 'text-slate-400 line-through'
+                                      }`}
+                                    >
+                                      {attr.label}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setEditingAttributeId(attr.id);
+                                        setEditingAttributeLabel(attr.label);
+                                      }}
+                                      className="p-1 text-slate-400 hover:text-indigo-600 rounded transition-colors"
+                                      title="Edit attribute label"
+                                    >
+                                      <Edit2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Actions: Toggle Active and Delete */}
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleAttribute(attr)}
+                                  className={`text-xs px-2.5 py-1 rounded-lg font-bold border transition-colors ${
+                                    attr.active
+                                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                      : 'bg-slate-200 text-slate-600 border-slate-300'
+                                  }`}
+                                >
+                                  {attr.active ? 'Active' : 'Hidden'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteAttribute(attr.id)}
+                                  className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition-colors"
+                                  title="Delete attribute"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1042,6 +1570,31 @@ export const StoreDetailPage: React.FC = () => {
                     ))}
                   </div>
                 </div>
+
+                {/* Mockup Active Attributes Preview */}
+                {attributes.filter((a) => a.active).length > 0 && (
+                  <div className="bg-white p-3 rounded-2xl border border-slate-200 space-y-2">
+                    <div className="text-[10px] font-bold uppercase text-slate-500">2. Customer Experience Highlights</div>
+                    <div className="flex flex-wrap gap-1">
+                      {attributes
+                        .filter((a) => a.active)
+                        .slice(0, 6)
+                        .map((a) => (
+                          <span
+                            key={a.id}
+                            className="text-[10px] px-2 py-0.5 rounded-lg font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                          >
+                            {a.label}
+                          </span>
+                        ))}
+                      {attributes.filter((a) => a.active).length > 6 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-lg text-slate-400 font-medium">
+                          +{attributes.filter((a) => a.active).length - 6} more
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Social Connect Preview */}
                 {(formData.whatsapp || formData.instagramUrl || formData.facebookUrl || formData.websiteUrl) && (

@@ -39,6 +39,8 @@ public class AiReviewService {
         Optional<String> aiGenerated = geminiApiClient.generateReview(
                 store.getName(),
                 request.getCategory(),
+                store.getBusinessCategory(),
+                store.getSpecialties(),
                 request.getAttributes(),
                 request.getCustomerNote(),
                 request.getLanguageStyle(),
@@ -51,10 +53,12 @@ public class AiReviewService {
             reviewText = aiGenerated.get();
             mode = "ai";
         } else {
-            // Graceful Fallback Engine
+            // Graceful Category-Aware Fallback Engine
             reviewText = demoReviewGenerator.generateReview(
                     store.getName(),
                     request.getCategory(),
+                    store.getBusinessCategory(),
+                    store.getSpecialties(),
                     request.getAttributes(),
                     request.getCustomerNote(),
                     request.getLanguageStyle(),

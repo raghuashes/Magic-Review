@@ -84,10 +84,15 @@ export const PublicReviewPage: React.FC = () => {
         setStore(data);
         if (data.categories && data.categories.length > 0) {
           setSelectedCategory(data.categories[0].name);
+        } else if (data.businessCategory) {
+          setSelectedCategory(data.businessCategory);
         }
-        // Pre-select 2 attributes if available
+        // Pre-select up to 2 active attributes if available
         if (data.attributes && data.attributes.length > 0) {
-          setSelectedAttributes(data.attributes.slice(0, 2).map((a) => a.label));
+          const activeAttrs = data.attributes.filter((a) => a.active);
+          if (activeAttrs.length > 0) {
+            setSelectedAttributes(activeAttrs.slice(0, 2).map((a) => a.label));
+          }
         }
         // Record PAGE_VIEW analytics event with campaign attribution
         publicService.recordEvent(slug, 'PAGE_VIEW', campaignTag);
@@ -107,7 +112,8 @@ export const PublicReviewPage: React.FC = () => {
   };
 
   const handleGenerate = async (isRegenerate = false) => {
-    if (!slug || !selectedCategory) return;
+    const categoryToUse = selectedCategory || store?.businessCategory || 'Customer Experience';
+    if (!slug) return;
     setIsGenerating(true);
     setHasCopied(false);
 
@@ -116,7 +122,7 @@ export const PublicReviewPage: React.FC = () => {
 
     try {
       const response = await publicService.generateReview(slug, {
-        category: selectedCategory,
+        category: categoryToUse,
         attributes: selectedAttributes,
         customerNote: customerNote.trim() || undefined,
         languageStyle,
@@ -358,14 +364,14 @@ export const PublicReviewPage: React.FC = () => {
           )}
 
           {/* Step 2: Customer Experience Tags */}
-          {store.attributes && store.attributes.length > 0 && (
+          {store.attributes && store.attributes.filter((a) => a.active).length > 0 && (
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
                 2. What did you appreciate most?
               </label>
               <p className="text-[11px] text-slate-500 mb-2.5">Tap all that apply to highlight in your review draft.</p>
               <div className="flex flex-wrap gap-2">
-                {store.attributes.map((attr) => {
+                {store.attributes.filter((a) => a.active).map((attr) => {
                   const isSelected = selectedAttributes.includes(attr.label);
                   return (
                     <button

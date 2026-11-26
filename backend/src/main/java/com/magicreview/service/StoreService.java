@@ -106,6 +106,8 @@ public class StoreService {
         store.setFacebookUrl(request.getFacebookUrl());
         store.setBusinessEmail(request.getBusinessEmail());
         store.setBusinessCategory(request.getBusinessCategory());
+        store.setSpecialties(request.getSpecialties());
+        store.setTargetCustomers(request.getTargetCustomers());
         store.setWelcomeMessage(request.getWelcomeMessage());
         store.setThankYouMessage(request.getThankYouMessage());
 
@@ -118,10 +120,10 @@ public class StoreService {
             categoryRepository.save(cat);
         }
 
-        // Seed default starter attributes
-        List<String> defaultAttrs = List.of("Helpful Staff", "Fair Pricing", "Quick Service", "Hygienic & Clean", "Wide Variety");
+        // Seed default starter attributes matching the business category
+        List<String> defaultAttrs = com.magicreview.util.CategoryDefaults.getDefaultsForCategory(request.getBusinessCategory());
         for (int i = 0; i < defaultAttrs.size(); i++) {
-            StoreAttribute attr = new StoreAttribute(savedStore, defaultAttrs.get(i), true, i);
+            StoreAttribute attr = new StoreAttribute(savedStore, defaultAttrs.get(i), true, i, "DEFAULT");
             attributeRepository.save(attr);
         }
 
@@ -157,6 +159,8 @@ public class StoreService {
         store.setFacebookUrl(request.getFacebookUrl());
         store.setBusinessEmail(request.getBusinessEmail());
         store.setBusinessCategory(request.getBusinessCategory());
+        store.setSpecialties(request.getSpecialties());
+        store.setTargetCustomers(request.getTargetCustomers());
         store.setWelcomeMessage(request.getWelcomeMessage());
         store.setThankYouMessage(request.getThankYouMessage());
         if (request.getActive() != null) store.setActive(request.getActive());
@@ -185,7 +189,7 @@ public class StoreService {
         List<AttributeResponse> attributes = attributeRepository
                 .findAllByStoreIdAndActiveTrueOrderByDisplayOrderAscCreatedAtAsc(store.getId())
                 .stream()
-                .map(a -> new AttributeResponse(a.getId(), store.getId(), a.getLabel(), a.getActive(), a.getDisplayOrder(), a.getCreatedAt()))
+                .map(a -> new AttributeResponse(a.getId(), store.getId(), a.getLabel(), a.getActive(), a.getDisplayOrder(), a.getSource(), a.getCreatedAt()))
                 .collect(Collectors.toList());
 
         return new PublicStoreResponse(
@@ -208,6 +212,8 @@ public class StoreService {
                 store.getBusinessCategory(),
                 store.getWelcomeMessage(),
                 store.getThankYouMessage(),
+                store.getSpecialties(),
+                store.getTargetCustomers(),
                 categories,
                 attributes
         );
@@ -249,6 +255,8 @@ public class StoreService {
                 store.getBusinessCategory(),
                 store.getWelcomeMessage(),
                 store.getThankYouMessage(),
+                store.getSpecialties(),
+                store.getTargetCustomers(),
                 store.getCreatedAt(),
                 store.getUpdatedAt()
         );

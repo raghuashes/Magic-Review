@@ -7,6 +7,7 @@ import {
   Attribute,
   AttributeRequest,
   AnalyticsResponse,
+  SuggestAttributesResponse,
 } from '../types';
 
 export const storeService = {
@@ -80,6 +81,35 @@ export const storeService = {
 
   async deleteAttribute(storeId: string, attributeId: string): Promise<void> {
     await api.delete(`/api/stores/${storeId}/attributes/${attributeId}`);
+  },
+
+  async suggestAttributesWithAi(storeId: string): Promise<SuggestAttributesResponse> {
+    const response = await api.post<SuggestAttributesResponse>(`/api/stores/${storeId}/attributes/suggest-ai`);
+    return response.data;
+  },
+
+  async getCategoryDefaults(storeId: string, category?: string): Promise<string[]> {
+    const response = await api.get<string[]>(`/api/stores/${storeId}/attributes/defaults`, {
+      params: category ? { category } : undefined,
+    });
+    return response.data;
+  },
+
+  async applyCategoryDefaults(storeId: string, category?: string): Promise<Attribute[]> {
+    const response = await api.post<Attribute[]>(`/api/stores/${storeId}/attributes/apply-defaults`, null, {
+      params: category ? { category } : undefined,
+    });
+    return response.data;
+  },
+
+  async batchCreateAttributes(storeId: string, requests: AttributeRequest[]): Promise<Attribute[]> {
+    const response = await api.post<Attribute[]>(`/api/stores/${storeId}/attributes/batch`, requests);
+    return response.data;
+  },
+
+  async reorderAttributes(storeId: string, attributeIds: string[]): Promise<Attribute[]> {
+    const response = await api.put<Attribute[]>(`/api/stores/${storeId}/attributes/reorder`, attributeIds);
+    return response.data;
   },
 
   // Analytics

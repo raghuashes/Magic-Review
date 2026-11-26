@@ -66,6 +66,12 @@ public class Store {
     @Column(name = "business_category", length = 100)
     private String businessCategory;
 
+    @Column(columnDefinition = "TEXT")
+    private String specialties;
+
+    @Column(name = "target_customers", length = 255)
+    private String targetCustomers;
+
     @Column(name = "welcome_message", columnDefinition = "TEXT")
     private String welcomeMessage;
 
@@ -329,5 +335,21 @@ public class Store {
 
     public void setThankYouMessage(String thankYouMessage) {
         this.thankYouMessage = thankYouMessage;
+    }
+
+    public String getSpecialties() {
+        return specialties;
+    }
+
+    public void setSpecialties(String specialties) {
+        this.specialties = specialties;
+    }
+
+    public String getTargetCustomers() {
+        return targetCustomers;
+    }
+
+    public void setTargetCustomers(String targetCustomers) {
+        this.targetCustomers = targetCustomers;
     }
 }

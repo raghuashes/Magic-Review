@@ -21,6 +21,8 @@ public class PublicStoreResponse {
     private String facebookUrl;
     private String businessEmail;
     private String businessCategory;
+    private String specialties;
+    private String targetCustomers;
     private String welcomeMessage;
     private String thankYouMessage;
     private List<CategoryResponse> categories;
@@ -72,6 +74,21 @@ public class PublicStoreResponse {
         this.businessCategory = businessCategory;
         this.welcomeMessage = welcomeMessage;
         this.thankYouMessage = thankYouMessage;
+    }
+
+    public PublicStoreResponse(UUID id, String name, String slug, String description, String logoUrl,
+                               String posterUrl, String primaryColor, String secondaryColor, String googleReviewUrl,
+                               String phone, String whatsapp, String address,
+                               String instagramUrl, String websiteUrl, String facebookUrl,
+                               String businessEmail, String businessCategory,
+                               String welcomeMessage, String thankYouMessage,
+                               String specialties, String targetCustomers,
+                               List<CategoryResponse> categories, List<AttributeResponse> attributes) {
+        this(id, name, slug, description, logoUrl, posterUrl, primaryColor, secondaryColor, googleReviewUrl,
+             phone, whatsapp, address, instagramUrl, websiteUrl, facebookUrl, businessEmail, businessCategory,
+             welcomeMessage, thankYouMessage, categories, attributes);
+        this.specialties = specialties;
+        this.targetCustomers = targetCustomers;
     }
 
     public UUID getId() {
@@ -240,5 +257,21 @@ public class PublicStoreResponse {
 
     public void setThankYouMessage(String thankYouMessage) {
         this.thankYouMessage = thankYouMessage;
+    }
+
+    public String getSpecialties() {
+        return specialties;
+    }
+
+    public void setSpecialties(String specialties) {
+        this.specialties = specialties;
+    }
+
+    public String getTargetCustomers() {
+        return targetCustomers;
+    }
+
+    public void setTargetCustomers(String targetCustomers) {
+        this.targetCustomers = targetCustomers;
     }
 }
