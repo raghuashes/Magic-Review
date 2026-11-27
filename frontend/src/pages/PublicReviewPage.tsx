@@ -47,7 +47,7 @@ export const PublicReviewPage: React.FC = () => {
   const [starRating, setStarRating] = useState<number>(5);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedAttributes, setSelectedAttributes] = useState<string[]>([]);
-  const [customerNote, setCustomerNote] = useState<string>('');
+  const [customerFeedback, setCustomerFeedback] = useState<string>('');
   const [languageStyle, setLanguageStyle] = useState<LanguageStyle>('TELUGU_ENGLISH_MIX');
   const [tone, setTone] = useState<ReviewTone>('FRIENDLY');
 
@@ -123,8 +123,13 @@ export const PublicReviewPage: React.FC = () => {
     try {
       const response = await publicService.generateReview(slug, {
         category: categoryToUse,
+        businessCategory: store?.businessCategory,
+        businessName: store?.name,
+        businessDescription: store?.description,
+        specialties: store?.specialties,
         attributes: selectedAttributes,
-        customerNote: customerNote.trim() || undefined,
+        customerFeedback: customerFeedback.trim() || undefined,
+        customerNote: customerFeedback.trim() || undefined,
         languageStyle,
         previousReviews: excludedList,
         starRating,
@@ -397,17 +402,28 @@ export const PublicReviewPage: React.FC = () => {
             </div>
           )}
 
-          {/* Step 3: Optional Customer Notes */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-              3. Specific details or mentions (Optional)
-            </label>
-            <input
-              type="text"
-              value={customerNote}
-              onChange={(e) => setCustomerNote(e.target.value)}
-              placeholder="e.g. Loved the antique gold necklace / food was piping hot"
-              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all placeholder:text-slate-400"
+          {/* Step 3: Customer Experience & Feedback (Primary Input) */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded-full bg-indigo-600 text-white inline-flex items-center justify-center text-[10px] font-black">
+                  3
+                </span>
+                Your Actual Experience & Feedback
+              </label>
+              <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
+                Primary Input
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 leading-normal">
+              Tell us what you experienced today (e.g. what you ordered, service speed, quality, or areas for improvement). The AI will formulate your review draft around your genuine thoughts.
+            </p>
+            <textarea
+              rows={3}
+              value={customerFeedback}
+              onChange={(e) => setCustomerFeedback(e.target.value)}
+              placeholder="e.g. The biryani was tasty, portion was good, but service was a little slow..."
+              className="w-full px-4 py-2.5 rounded-2xl border border-slate-300 text-xs sm:text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none transition-all placeholder:text-slate-400 leading-relaxed"
             />
           </div>
 

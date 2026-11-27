@@ -177,8 +177,13 @@ export interface PublicStore {
 
 export interface GenerateReviewRequest {
   category: string;
+  businessCategory?: string;
+  businessName?: string;
+  businessDescription?: string;
+  specialties?: string;
   attributes: string[];
   customerNote?: string;
+  customerFeedback?: string;
   languageStyle: LanguageStyle;
   previousReviews?: string[];
   starRating?: number;

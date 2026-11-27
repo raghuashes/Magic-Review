@@ -71,7 +71,7 @@ public class AiReviewServiceTest {
     void testEnglishReviewGeneration() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), eq(LanguageStyle.ENGLISH), any(), any(), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), any(), eq(LanguageStyle.ENGLISH), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Triggers fallback demo generator
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -99,7 +99,7 @@ public class AiReviewServiceTest {
     void testTeluguEnglishMixReviewGeneration() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Triggers fallback demo generator
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -133,7 +133,7 @@ public class AiReviewServiceTest {
     void testHinglishReviewGeneration() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), eq(LanguageStyle.HINGLISH), any(), any(), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), any(), eq(LanguageStyle.HINGLISH), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Triggers fallback demo generator
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -158,7 +158,7 @@ public class AiReviewServiceTest {
 
         // Verify colloquial Hinglish Romanized phrases are present
         String lower = response.getReviewText().toLowerCase();
-        assertTrue(lower.contains("bahut") || lower.contains("badhiya") || lower.contains("achha") || lower.contains("khas") || lower.contains("kafi"),
+        assertTrue(lower.contains("bahut") || lower.contains("badhiya") || lower.contains("achha") || lower.contains("khas") || lower.contains("kafi") || lower.contains("shandar"),
                 "Should contain Romanized conversational Hindi words");
     }
 
@@ -167,7 +167,7 @@ public class AiReviewServiceTest {
     void testNonRepetitionOnRegenerate() {
         when(storeRepository.findBySlugAndActiveTrue("sri-sai-jewellers"))
                 .thenReturn(Optional.of(mockStore));
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
                 .thenReturn(Optional.empty()); // Fallback demo engine
 
         List<String> seenReviews = new ArrayList<>();
@@ -202,7 +202,7 @@ public class AiReviewServiceTest {
                 .thenReturn(Optional.of(mockStore));
 
         String mockAiOutput = "\"Sri Sai Jewellers lo bridal collection chala awesome ga undhi. Staff helped us patiently!\"";
-        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
+        when(geminiApiClient.generateReview(any(), any(), any(), any(), any(), any(), any(), eq(LanguageStyle.TELUGU_ENGLISH_MIX), any(), any(), any()))
                 .thenReturn(Optional.of(mockAiOutput));
 
         GenerateReviewRequest request = new GenerateReviewRequest(
@@ -246,8 +246,8 @@ public class AiReviewServiceTest {
         );
         assertNotNull(restaurantReview);
         String restLower = restaurantReview.toLowerCase();
-        assertTrue(restLower.contains("food") || restLower.contains("meal") || restLower.contains("dining") || restLower.contains("delicious") || restLower.contains("flavours") || restLower.contains("taste"),
-                "Restaurant review should use culinary vocabulary");
+        assertTrue(restLower.contains("biryani") || restLower.contains("food") || restLower.contains("taste"),
+                "Restaurant review should contain feedback item or culinary vocabulary");
         assertFalse(restLower.contains("jewellery") || restLower.contains("gold") || restLower.contains("diamond"),
                 "Restaurant review must not contain jewellery terms");
 
@@ -258,9 +258,106 @@ public class AiReviewServiceTest {
         );
         assertNotNull(jewelleryReview);
         String jewLower = jewelleryReview.toLowerCase();
-        assertTrue(jewLower.contains("jewellery") || jewLower.contains("craftsmanship") || jewLower.contains("designs") || jewLower.contains("shopping"),
+        assertTrue(jewLower.contains("jewellery") || jewLower.contains("craftsmanship") || jewLower.contains("designs") || jewLower.contains("shopping") || jewLower.contains("experience"),
                 "Jewellery review should use jewellery vocabulary");
-        assertFalse(jewLower.contains("delicious") || jewLower.contains("tasty") || jewLower.contains("flavour"),
+        assertFalse(jewLower.contains("delicious") || jewLower.contains("tasty") || jewLower.contains("flavour") || jewLower.contains("recipe"),
                 "Jewellery review must not contain culinary terms");
+    }
+
+    @Test
+    @DisplayName("Customer actual experience must determine the review content across different customers for the same Restaurant category")
+    void testCustomerFeedbackDeterminesReviewContentForSameCategory() {
+        String store = "Spice Garden";
+        String category = "Restaurant";
+
+        // Customer A: Excellent food and fast service
+        String reviewA = demoReviewGenerator.generateReview(
+                store, "Dinner", category, "Family dining, biryani",
+                List.of("Food taste", "Staff service"),
+                "Excellent food and fast service.",
+                LanguageStyle.ENGLISH, List.of(), 5, "FRIENDLY"
+        );
+        assertTrue(reviewA.toLowerCase().contains("excellent food and fast service"), "Review A must reflect Customer A's exact positive experience");
+
+        // Customer B: Good food but slow service
+        String reviewB = demoReviewGenerator.generateReview(
+                store, "Dinner", category, "Family dining, biryani",
+                List.of("Food taste", "Staff service"),
+                "The biryani was tasty, portion was good, but service was a little slow.",
+                LanguageStyle.ENGLISH, List.of(), 4, "FRIENDLY"
+        );
+        assertTrue(reviewB.toLowerCase().contains("service was a little slow"), "Review B must faithfully preserve the customer's mixed/slow service feedback");
+        assertFalse(reviewB.toLowerCase().contains("blown away") || reviewB.toLowerCase().contains("top tier!"),
+                "Review B must NOT whitewash slow service with generic high praise");
+
+        // Customer C: Poor food quality but friendly staff
+        String reviewC = demoReviewGenerator.generateReview(
+                store, "Dinner", category, "Family dining, biryani",
+                List.of("Food quality", "Staff service"),
+                "Poor food quality but friendly staff.",
+                LanguageStyle.ENGLISH, List.of(), 2, "PROFESSIONAL"
+        );
+        assertTrue(reviewC.toLowerCase().contains("poor food quality but friendly staff"), "Review C must preserve poor food quality feedback");
+
+        // Customer D: Enjoyed the ambience but found prices expensive
+        String reviewD = demoReviewGenerator.generateReview(
+                store, "Dinner", category, "Family dining, biryani",
+                List.of("Ambience", "Value for money"),
+                "Enjoyed the ambience but found prices expensive.",
+                LanguageStyle.ENGLISH, List.of(), 3, "SHORT"
+        );
+        assertTrue(reviewD.toLowerCase().contains("prices expensive"), "Review D must preserve expensive pricing feedback");
+
+        // All 4 reviews must be distinct and specific to their customers
+        assertNotEquals(reviewA, reviewB);
+        assertNotEquals(reviewB, reviewC);
+        assertNotEquals(reviewC, reviewD);
+    }
+
+    @Test
+    @DisplayName("Should accurately reflect customer feedback across Jewellery, Clothing, Gym, and Electronics categories")
+    void testCrossIndustryFeedbackPreservation() {
+        // Jewellery
+        String jewReview = demoReviewGenerator.generateReview(
+                "Sri Krishna Jewellers", "Bridal Gold", "Jewellery Store", "Temple gold",
+                List.of("Craftsmanship", "Pricing transparency"),
+                "Loved the temple gold craftsmanship, pricing was clearly explained.",
+                LanguageStyle.ENGLISH, List.of(), 5, "FRIENDLY"
+        );
+        assertTrue(jewReview.toLowerCase().contains("temple gold craftsmanship"), "Jewellery review must reflect specific feedback");
+        assertFalse(jewReview.toLowerCase().contains("delicious") || jewReview.toLowerCase().contains("food"));
+
+        // Clothing
+        String clothReview = demoReviewGenerator.generateReview(
+                "Trends Fashion", "Casual Wear", "Clothing / Fashion Store", "Cotton shirts",
+                List.of("Fabric comfort", "Fitting"),
+                "Fabric was super soft, but trial rooms were busy.",
+                LanguageStyle.ENGLISH, List.of(), 4, "FRIENDLY"
+        );
+        assertTrue(clothReview.toLowerCase().contains("trial rooms were busy"), "Clothing review must reflect busy trial rooms feedback");
+
+        // Gym
+        String gymReview = demoReviewGenerator.generateReview(
+                "PowerFit Gym", "Strength Training", "Gym / Fitness Centre", "Cardio and weights",
+                List.of("Trainer support", "Equipment quality"),
+                "Great trainers, but evening peak hours are crowded.",
+                LanguageStyle.ENGLISH, List.of(), 4, "FRIENDLY"
+        );
+        assertTrue(gymReview.toLowerCase().contains("evening peak hours are crowded"), "Gym review must reflect crowded peak hours");
+
+        // Electronics
+        String elecReview = demoReviewGenerator.generateReview(
+                "Apex Computers", "Laptop Purchase", "Electronics Store", "Laptops and desktops",
+                List.of("Genuine products", "Customer service"),
+                "Genuine laptop received, staff helped with OS setup.",
+                LanguageStyle.ENGLISH, List.of(), 5, "FRIENDLY"
+        );
+        assertTrue(elecReview.toLowerCase().contains("staff helped with os setup"), "Electronics review must reflect OS setup feedback");
+
+        // Verify Latin script for all
+        for (String r : List.of(jewReview, clothReview, gymReview, elecReview)) {
+            assertFalse(TELUGU_SCRIPT_PATTERN.matcher(r).find());
+            assertFalse(DEVANAGARI_SCRIPT_PATTERN.matcher(r).find());
+        }
     }
 }

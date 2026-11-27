@@ -61,12 +61,19 @@ public class GeminiApiClient {
                                            String specialties, List<String> attributes,
                                            String customerNote, LanguageStyle languageStyle,
                                            List<String> previousReviews, Integer starRating, String tone) {
+        return generateReview(storeName, category, businessCategory, null, specialties, attributes, customerNote, languageStyle, previousReviews, starRating, tone);
+    }
+
+    public Optional<String> generateReview(String storeName, String category, String businessCategory,
+                                           String businessDescription, String specialties, List<String> attributes,
+                                           String customerFeedback, LanguageStyle languageStyle,
+                                           List<String> previousReviews, Integer starRating, String tone) {
         if (!isConfigured()) {
             log.info("Gemini API key is not configured. Switching to Demo Mode fallback.");
             return Optional.empty();
         }
 
-        String prompt = buildPrompt(storeName, category, businessCategory, specialties, attributes, customerNote, languageStyle, previousReviews, starRating, tone);
+        String prompt = buildPrompt(storeName, category, businessCategory, businessDescription, specialties, attributes, customerFeedback, languageStyle, previousReviews, starRating, tone);
         String url = String.format("%s/%s:generateContent?key=%s", apiUrl, model, apiKey);
 
         Map<String, Object> requestBody = Map.of(
@@ -74,7 +81,7 @@ public class GeminiApiClient {
                         Map.of("parts", List.of(Map.of("text", prompt)))
                 ),
                 "generationConfig", Map.of(
-                        "temperature", 0.9,
+                        "temperature", 0.85,
                         "topP", 0.95,
                         "maxOutputTokens", 250
                 )
@@ -160,50 +167,62 @@ public class GeminiApiClient {
         return CategoryDefaults.generateSmartFallbackAttributes(category, storeName, description, specialties, existingAttributes);
     }
 
-    private String buildPrompt(String storeName, String category, String businessCategory, String specialties,
-                               List<String> attributes, String customerNote, LanguageStyle languageStyle,
+    private String buildPrompt(String storeName, String category, String businessCategory,
+                               String businessDescription, String specialties,
+                               List<String> attributes, String customerFeedback, LanguageStyle languageStyle,
                                List<String> previousReviews, Integer starRating, String tone) {
         String attrsString = (attributes != null && !attributes.isEmpty()) ? String.join(", ", attributes) : "None";
-        String noteString = (customerNote != null && !customerNote.isBlank()) ? customerNote.trim() : "None";
+        String feedbackString = (customerFeedback != null && !customerFeedback.isBlank()) ? customerFeedback.trim() : "";
         String safeTone = (tone != null && !tone.isBlank()) ? tone : "FRIENDLY";
         int safeRating = (starRating != null && starRating >= 1 && starRating <= 5) ? starRating : 5;
         String mainCategory = (businessCategory != null && !businessCategory.isBlank()) ? businessCategory : category;
 
         StringBuilder sb = new StringBuilder();
-        sb.append("You are an expert customer review generator for local Indian businesses.\n");
-        sb.append("Business Category: ").append(mainCategory).append("\n");
-        sb.append("Business Name: ").append(storeName).append("\n");
-        if (specialties != null && !specialties.isBlank()) {
-            sb.append("Specialties / Offerings: ").append(specialties.trim()).append("\n");
+        sb.append("You are generating a review based on a real customer's experience.\n\n");
+
+        sb.append("PRIORITY ORDER (CRITICAL - FOLLOW STRICTLY):\n");
+        sb.append("1. CUSTOMER'S ACTUAL EXPERIENCE OR FEEDBACK (PRIMARY CONTENT - MOST IMPORTANT):\n");
+        if (!feedbackString.isBlank()) {
+            sb.append("   \"").append(feedbackString).append("\"\n");
+            sb.append("   -> The review MUST center directly around this actual experience.\n");
+            sb.append("   -> If the customer provides mixed, neutral, or constructive feedback (e.g., food was good but service was slow, or prices were expensive), preserve that exact meaning faithfully! DO NOT whitewash or turn it into 100% glowing praise.\n");
+        } else {
+            sb.append("   (No written feedback provided. Generate a concise review based strictly on their selected attributes and known offerings. Do NOT invent customer experiences.)\n");
         }
-        sb.append("Visit / Purchase Reason: ").append(category).append("\n");
-        sb.append("Target Language Style: ").append(languageStyle.name()).append("\n");
-        sb.append("Attributes Selected: ").append(attrsString).append("\n");
-        sb.append("Customer Rating: ").append(safeRating).append(" out of 5 stars\n");
-        sb.append("Desired Review Tone: ").append(safeTone).append("\n");
-        sb.append("Customer Notes: ").append(noteString).append("\n\n");
+        sb.append("2. CUSTOMER-SELECTED ATTRIBUTES: ").append(attrsString).append("\n");
+        sb.append("3. SPECIFIC PRODUCT OR SERVICE DETAILS: ").append(category != null ? category : "General Visit").append("\n");
+        if (specialties != null && !specialties.isBlank()) {
+            sb.append("4. BUSINESS SPECIALTIES / OFFERINGS: ").append(specialties.trim()).append("\n");
+        }
+        if (businessDescription != null && !businessDescription.isBlank()) {
+            sb.append("   BUSINESS DESCRIPTION: ").append(businessDescription.trim()).append("\n");
+        }
+        sb.append("5. BUSINESS NAME: ").append(storeName).append("\n");
+        sb.append("6. BUSINESS CATEGORY (FOR VOCABULARY CONTEXT ONLY): ").append(mainCategory).append("\n");
+        sb.append("7. TARGET LANGUAGE STYLE: ").append(languageStyle.name()).append("\n");
+        sb.append("8. CUSTOMER RATING: ").append(safeRating).append(" out of 5 stars\n");
+        sb.append("9. DESIRED TONE: ").append(safeTone).append("\n\n");
 
         if (previousReviews != null && !previousReviews.isEmpty()) {
-            sb.append("PREVIOUS REVIEWS ALREADY GENERATED (DO NOT REPEAT):\n");
+            sb.append("PREVIOUS REVIEWS ALREADY GENERATED IN THIS SESSION (DO NOT REPEAT):\n");
             for (int i = 0; i < previousReviews.size(); i++) {
                 sb.append(i + 1).append(". \"").append(previousReviews.get(i)).append("\"\n");
             }
-            sb.append("\n");
-            sb.append("CRITICAL: You must generate an entirely NEW, FRESH, and DISTINCT review. Vary the opening sentence, sentence structure, and vocabulary.\n\n");
+            sb.append("\nCRITICAL: You must generate an entirely NEW, FRESH, and DISTINCT variation while faithfully preserving the customer's actual feedback.\n\n");
         }
 
-        sb.append("RULES:\n");
-        sb.append("1. Output ONLY the raw review text string in 1 to 3 short, natural, conversational sentences. Sound like a real, authentic human customer. Do NOT include quotes, intros, or markdown.\n");
-        sb.append("2. If Language Style is TELUGU_ENGLISH_MIX: Combine natural spoken Telugu with common English words. You MUST use Roman/English letters ONLY. DO NOT use Telugu script (TELUGU UNICODE IS STRICTLY FORBIDDEN).\n");
-        sb.append("3. If Language Style is HINGLISH: Combine natural spoken Hindi with common English words. You MUST use Roman/English letters ONLY. DO NOT use Devanagari script (DEVANAGARI UNICODE IS STRICTLY FORBIDDEN).\n");
-        sb.append("4. Do NOT invent fake facts or claims. Use the customer's actual input.\n");
-        sb.append("5. STRICT CATEGORY-AWARE VOCABULARY RULE:\n");
-        sb.append("   - If category relates to Food / Dining / Cafe / Bakery: Focus strictly on taste, flavour, freshness, dishes, and dining experience. NEVER mention clothes, jewellery, devices, or fabric.\n");
-        sb.append("   - If category relates to Jewellery: Focus strictly on jewellery designs, gold/diamond craftsmanship, collections, and purchasing experience. NEVER mention food, dining, or tailoring.\n");
-        sb.append("   - If category relates to Clothing / Fashion / Footwear: Focus on fabric comfort, fit, design variety, and fashion style.\n");
-        sb.append("   - If category relates to Gym / Fitness: Focus on workout atmosphere, equipment, trainers, and fitness routines.\n");
-        sb.append("   - If category relates to Healthcare / Dental: Focus on doctor consultation, diagnosis, treatment, and clinic care.\n");
-        sb.append("   - Ensure all vocabulary perfectly matches the business category: ").append(mainCategory).append(".\n");
+        sb.append("INSTRUCTIONS:\n");
+        sb.append("- The business category is provided only to understand the business context and use appropriate vocabulary.\n");
+        sb.append("- Do not generate a review based only on the category.\n");
+        sb.append("- Carefully use the customer's actual feedback and selected attributes as the primary content.\n");
+        sb.append("- Mention relevant specific details naturally.\n");
+        sb.append("- Do not invent experiences, products, services, or positive claims.\n");
+        sb.append("- If the customer provides negative or mixed feedback, preserve that meaning.\n");
+        sb.append("- Generate a natural, unique review that sounds like a real customer wrote it in 1 to 3 short sentences.\n");
+        sb.append("- Output ONLY the raw review text string without quotes, headings, or markdown.\n");
+        sb.append("- If Language Style is TELUGU_ENGLISH_MIX: Combine natural spoken Telugu with common English words. You MUST use Roman/English letters ONLY. DO NOT use Telugu script (TELUGU UNICODE IS STRICTLY FORBIDDEN).\n");
+        sb.append("- If Language Style is HINGLISH: Combine natural spoken Hindi with common English words. You MUST use Roman/English letters ONLY. DO NOT use Devanagari script (DEVANAGARI UNICODE IS STRICTLY FORBIDDEN).\n");
+        sb.append("- STRICT CATEGORY-AWARE VOCABULARY: Maintain vocabulary appropriate to ").append(mainCategory).append(" (no culinary terms for jewellery, gym, or clinics; no fashion terms for dining).\n");
 
         return sb.toString();
     }
